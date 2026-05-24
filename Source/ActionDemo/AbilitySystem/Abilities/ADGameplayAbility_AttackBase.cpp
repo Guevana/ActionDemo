@@ -3,6 +3,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Animation/AnimInstance.h"
+#include "AbilitySystem/Effects/ADGameplayEffect_Damage.h"
 #include "Character/Base/ADCharacterBase.h"
 #include "Components/Combat/ADCombatComponent.h"
 #include "Core/Tags/ADGameplayTags.h"
@@ -11,6 +12,7 @@
 UADGameplayAbility_AttackBase::UADGameplayAbility_AttackBase()
 {
 	InputTag = ADGameplayTags::Input_Attack_Light;
+	DamageEffectClass = UADGameplayEffect_Damage::StaticClass();
 }
 
 void UADGameplayAbility_AttackBase::ActivateAbility(

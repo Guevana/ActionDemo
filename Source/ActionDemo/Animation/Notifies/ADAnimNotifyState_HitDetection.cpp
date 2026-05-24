@@ -24,7 +24,7 @@ void UADAnimNotifyState_HitDetection::NotifyBegin(
 
 	if (UADHitDetectionComponent* HitDetectionComponent = FindHitDetectionComponent(MeshComp))
 	{
-		HitDetectionComponent->BeginHitWindow(HitConfig);
+		HitDetectionComponent->BeginHitWindowFromMesh(HitConfig, MeshComp);
 	}
 }
 

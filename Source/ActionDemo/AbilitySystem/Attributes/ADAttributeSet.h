@@ -21,6 +21,11 @@ class ACTIONDEMO_API UADAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 
 public:
+	UADAttributeSet();
+
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
 	FGameplayAttributeData Health;
 

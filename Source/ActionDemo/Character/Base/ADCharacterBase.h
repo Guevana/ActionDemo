@@ -11,6 +11,12 @@ class UADAttributeSet;
 class UADCombatComponent;
 class UADHitDetectionComponent;
 class UADTargetingComponent;
+class UADWeaponManagerComponent;
+class AADWeaponBase;
+class AADCharacterBase;
+struct FOnAttributeChangeData;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FADCharacterDeathSignature, AADCharacterBase*, DeadCharacter);
 
 /**
  * 所有战斗实体的统一角色基类。
@@ -41,6 +47,28 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
 	UADHitDetectionComponent* GetHitDetectionComponent() const;
 
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
+	UADWeaponManagerComponent* GetWeaponManagerComponent() const;
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
+	UADAttributeSet* GetADAttributeSet() const;
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Equipment")
+	AADWeaponBase* GetEquippedWeapon() const;
+
+	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Equipment")
+	void SetEquippedWeapon(AADWeaponBase* InWeapon);
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
+	bool IsDead() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ActionDemo|Character")
+	void HandleDeath();
+	virtual void HandleDeath_Implementation();
+
+	UPROPERTY(BlueprintAssignable, Category = "ActionDemo|Character")
+	FADCharacterDeathSignature OnCharacterDeath;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -68,7 +96,20 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|Components")
 	TObjectPtr<UADHitDetectionComponent> HitDetectionComponent;
 
+	/** 武器管理组件。 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|Components")
+	TObjectPtr<UADWeaponManagerComponent> WeaponManagerComponent;
+
 	/** 初始化 GAS ActorInfo。 */
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Character")
 	virtual void InitializeAbilityActorInfo();
+
+	void BindAttributeDelegates();
+
+	void HandleHealthChanged(const FOnAttributeChangeData& ChangeData);
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Character")
+	bool bIsDead = false;
+
+	bool bAttributeDelegatesBound = false;
 };

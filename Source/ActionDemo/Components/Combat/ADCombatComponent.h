@@ -95,6 +95,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Combat")
 	void HandleHitConfirmed(const FADCombatHitEventData& HitData);
 
+	/** 根据当前动作 Ability 配置补全命中伤害数据。 */
+	void FillHitDataFromCurrentAction(FADCombatHitEventData& HitData) const;
+
 protected:
 	/** 同步 Combat 状态到 ASC 标签。 */
 	void SyncCancelWindowTag();

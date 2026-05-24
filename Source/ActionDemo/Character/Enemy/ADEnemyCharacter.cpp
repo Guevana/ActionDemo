@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/ADGameplayAbility.h"
+#include "AbilitySystem/Abilities/ADGameplayAbility_ReceiveHit.h"
 #include "AI/ADEnemyAIController.h"
 #include "Character/Enemy/ADEnemyConfigData.h"
 #include "GameplayAbilitySpec.h"
@@ -10,6 +11,7 @@ AADEnemyCharacter::AADEnemyCharacter()
 {
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AADEnemyAIController::StaticClass();
+	DefaultHitReactionAbilityClass = UADGameplayAbility_ReceiveHit::StaticClass();
 }
 
 void AADEnemyCharacter::BeginPlay()
@@ -53,22 +55,46 @@ void AADEnemyCharacter::ReceiveCombatHit_Implementation(const FADCombatHitEventD
 	OnEnemyHitReceived.Broadcast(HitData);
 }
 
+void AADEnemyCharacter::HandleDeath_Implementation()
+{
+	const bool bWasDead = IsDead();
+	Super::HandleDeath_Implementation();
+
+	if (!bWasDead && IsDead())
+	{
+		OnEnemyDeath.Broadcast(this);
+	}
+}
+
 void AADEnemyCharacter::GrantStartupAbilitiesFromConfig()
 {
-	if (bStartupAbilitiesGranted || !HasAuthority() || EnemyConfig == nullptr || GetADAbilitySystemComponent() == nullptr)
+	if (bStartupAbilitiesGranted || !HasAuthority() || GetADAbilitySystemComponent() == nullptr)
 	{
 		return;
 	}
 
-	for (const TSubclassOf<UADGameplayAbility>& AbilityClass : EnemyConfig->StartupAbilities)
+	TSet<UClass*> GrantedAbilityClasses;
+	auto GrantAbility = [this, &GrantedAbilityClasses](const TSubclassOf<UADGameplayAbility>& AbilityClass)
 	{
-		if (!AbilityClass)
+		UClass* AbilityClassObject = AbilityClass.Get();
+		if (AbilityClassObject == nullptr || GrantedAbilityClasses.Contains(AbilityClassObject))
 		{
-			continue;
+			return;
 		}
 
-		FGameplayAbilitySpec AbilitySpec(AbilityClass, 1, INDEX_NONE, this);
+		GrantedAbilityClasses.Add(AbilityClassObject);
+		FGameplayAbilitySpec AbilitySpec(AbilityClassObject, 1, INDEX_NONE, this);
 		GetADAbilitySystemComponent()->GiveAbility(AbilitySpec);
+	};
+
+	GrantAbility(DefaultHitReactionAbilityClass);
+
+	if (EnemyConfig != nullptr)
+	{
+		for (const TSubclassOf<UADGameplayAbility>& AbilityClass : EnemyConfig->StartupAbilities)
+		{
+			GrantAbility(AbilityClass);
+		}
 	}
 
 	bStartupAbilitiesGranted = true;

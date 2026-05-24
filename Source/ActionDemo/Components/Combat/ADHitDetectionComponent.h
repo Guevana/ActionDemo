@@ -8,6 +8,14 @@
 #include "ADHitDetectionComponent.generated.h"
 
 class AADCharacterBase;
+class USkeletalMeshComponent;
+
+UENUM(BlueprintType)
+enum class EADHitDetectionSocketSource : uint8
+{
+	CharacterMesh UMETA(DisplayName = "Character Mesh"),
+	EquippedWeapon UMETA(DisplayName = "Equipped Weapon")
+};
 
 USTRUCT(BlueprintType)
 struct FADHitDetectionWindowConfig
@@ -15,13 +23,19 @@ struct FADHitDetectionWindowConfig
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit")
-	FVector BoxHalfExtent = FVector(60.0f, 40.0f, 60.0f);
+	EADHitDetectionSocketSource SocketSource = EADHitDetectionSocketSource::CharacterMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit")
-	FVector LocalOffset = FVector(120.0f, 0.0f, 40.0f);
+	FName StartSocketName = TEXT("Hit_Start");
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit")
-	FRotator LocalRotation = FRotator::ZeroRotator;
+	FName EndSocketName = TEXT("Hit_End");
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit", meta = (ClampMin = "0.0"))
+	float SocketAxisPadding = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit")
+	FVector2D CrossSectionHalfExtent = FVector2D(40.0f, 60.0f);
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ActionDemo|Hit")
 	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
@@ -54,6 +68,9 @@ public:
 	void BeginHitWindow(const FADHitDetectionWindowConfig& InConfig);
 
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Hit")
+	void BeginHitWindowFromMesh(const FADHitDetectionWindowConfig& InConfig, USkeletalMeshComponent* SourceMeshComp);
+
+	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Hit")
 	void TickHitWindow(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Hit")
@@ -63,15 +80,19 @@ public:
 	bool IsHitWindowActive() const;
 
 protected:
-	bool BuildTraceTransform(FVector& OutCenter, FQuat& OutRotation) const;
+	USkeletalMeshComponent* ResolveSocketSourceMesh(USkeletalMeshComponent* NotifySourceMeshComp) const;
+	bool BuildSocketTraceShape(FVector& OutCenter, FQuat& OutRotation, FVector& OutHalfExtent, FVector& OutStartSocketLocation, FVector& OutEndSocketLocation) const;
 	void ProcessHitResult(const FHitResult& HitResult);
+	void ResetHitWindowState();
 
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
 	bool bHitWindowActive = false;
 
 	FADHitDetectionWindowConfig ActiveConfig;
+	UPROPERTY(Transient)
+	TObjectPtr<USkeletalMeshComponent> ActiveSourceMeshComponent = nullptr;
+
 	TSet<TObjectKey<AActor>> HitActorsThisWindow;
 	FVector PreviousTraceCenter = FVector::ZeroVector;
-	FQuat PreviousTraceRotation = FQuat::Identity;
 	bool bHasPreviousTraceTransform = false;
 };

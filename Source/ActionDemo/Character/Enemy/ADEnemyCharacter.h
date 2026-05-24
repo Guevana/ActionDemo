@@ -6,8 +6,11 @@
 #include "ADEnemyCharacter.generated.h"
 
 class UADEnemyConfigData;
+class UADGameplayAbility;
+class AADEnemyCharacter;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FADEnemyHitReceivedSignature, const FADCombatHitEventData&, HitData);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FADEnemyDeathSignature, AADEnemyCharacter*, DeadEnemy);
 
 /**
  * 敌人角色基类。
@@ -28,9 +31,13 @@ public:
 	AADCharacterBase* GetLastHitInstigator() const;
 
 	virtual void ReceiveCombatHit_Implementation(const FADCombatHitEventData& HitData) override;
+	virtual void HandleDeath_Implementation() override;
 
 	UPROPERTY(BlueprintAssignable, Category = "ActionDemo|Enemy")
 	FADEnemyHitReceivedSignature OnEnemyHitReceived;
+
+	UPROPERTY(BlueprintAssignable, Category = "ActionDemo|Enemy")
+	FADEnemyDeathSignature OnEnemyDeath;
 
 protected:
 	virtual void BeginPlay() override;
@@ -40,6 +47,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Config")
 	TObjectPtr<UADEnemyConfigData> EnemyConfig;
+
+	/** 敌人默认受击 Ability；确保未配置资产时也能消费命中伤害事件。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Ability")
+	TSubclassOf<UADGameplayAbility> DefaultHitReactionAbilityClass;
 
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Enemy")
 	TObjectPtr<AADCharacterBase> LastHitInstigator = nullptr;

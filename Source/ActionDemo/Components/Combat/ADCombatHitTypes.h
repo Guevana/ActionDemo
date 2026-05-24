@@ -5,6 +5,7 @@
 #include "ADCombatHitTypes.generated.h"
 
 class AADCharacterBase;
+class UGameplayEffect;
 
 USTRUCT(BlueprintType)
 struct FADCombatHitEventData
@@ -37,4 +38,10 @@ struct FADCombatHitEventData
 
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
 	bool bHitLockedTarget = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
+	float DamageAmount = 0.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };

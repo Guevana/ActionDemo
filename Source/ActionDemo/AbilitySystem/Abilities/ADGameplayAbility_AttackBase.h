@@ -8,6 +8,7 @@ class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitDelay;
 class UAnimMontage;
 class UADCombatActionData;
+class UGameplayEffect;
 
 /**
  * 攻击类 Ability 通用基类。
@@ -57,6 +58,14 @@ public:
 	/** 攻击 Ability 可驱动的数据配置。 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack")
 	TObjectPtr<UADCombatActionData> ActionData;
+
+	/** 命中后传给目标受击 Ability 的基础伤害值。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|Damage", meta = (ClampMin = "0.0"))
+	float DamageAmount = 10.0f;
+
+	/** 命中后由目标侧受击 Ability 应用的伤害 GameplayEffect。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|Damage")
+	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 protected:
 	/** 统一登记攻击开始时的战斗状态。 */

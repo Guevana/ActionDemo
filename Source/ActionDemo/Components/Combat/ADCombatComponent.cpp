@@ -1,6 +1,7 @@
 #include "Components/Combat/ADCombatComponent.h"
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
+#include "AbilitySystem/Abilities/ADGameplayAbility_AttackBase.h"
 #include "Character/Base/ADCharacterBase.h"
 #include "Components/Combat/ADCombatHitReceiverInterface.h"
 #include "Core/Tags/ADGameplayTags.h"
@@ -111,18 +112,39 @@ bool UADCombatComponent::HasActiveAction() const
 
 void UADCombatComponent::HandleHitConfirmed(const FADCombatHitEventData& HitData)
 {
+	FADCombatHitEventData ResolvedHitData = HitData;
+	FillHitDataFromCurrentAction(ResolvedHitData);
+
 	UE_LOG(
 		LogTemp,
 		Log,
-		TEXT("[ActionDemo] Combat hit confirmed. Source=%s Target=%s Action=%s Event=%s LockedTarget=%d"),
-		HitData.InstigatorCharacter != nullptr ? *HitData.InstigatorCharacter->GetName() : TEXT("None"),
-		HitData.TargetCharacter != nullptr ? *HitData.TargetCharacter->GetName() : TEXT("None"),
-		*HitData.SourceActionTag.ToString(),
-		*HitData.HitEventTag.ToString(),
-		HitData.bHitLockedTarget);
+		TEXT("[ActionDemo] Combat hit confirmed. Source=%s Target=%s Action=%s Event=%s LockedTarget=%d Damage=%.2f"),
+		ResolvedHitData.InstigatorCharacter != nullptr ? *ResolvedHitData.InstigatorCharacter->GetName() : TEXT("None"),
+		ResolvedHitData.TargetCharacter != nullptr ? *ResolvedHitData.TargetCharacter->GetName() : TEXT("None"),
+		*ResolvedHitData.SourceActionTag.ToString(),
+		*ResolvedHitData.HitEventTag.ToString(),
+		ResolvedHitData.bHitLockedTarget,
+		ResolvedHitData.DamageAmount);
 
-	OnCombatHitConfirmed.Broadcast(HitData);
-	SendHitGameplayEvent(HitData);
+	OnCombatHitConfirmed.Broadcast(ResolvedHitData);
+	SendHitGameplayEvent(ResolvedHitData);
+}
+
+void UADCombatComponent::FillHitDataFromCurrentAction(FADCombatHitEventData& HitData) const
+{
+	if (CurrentActionAbilityClass == nullptr)
+	{
+		return;
+	}
+
+	const UADGameplayAbility_AttackBase* AttackCDO = Cast<UADGameplayAbility_AttackBase>(CurrentActionAbilityClass->GetDefaultObject());
+	if (AttackCDO == nullptr)
+	{
+		return;
+	}
+
+	HitData.DamageAmount = AttackCDO->DamageAmount;
+	HitData.DamageEffectClass = AttackCDO->DamageEffectClass;
 }
 
 void UADCombatComponent::SyncCancelWindowTag()
@@ -163,7 +185,19 @@ void UADCombatComponent::SendHitGameplayEvent(const FADCombatHitEventData& HitDa
 	EventData.EventTag = HitData.HitEventTag;
 	EventData.Instigator = HitData.InstigatorCharacter;
 	EventData.Target = HitData.TargetCharacter;
-	EventData.ContextHandle.AddHitResult(HitData.HitResult, true);
+	EventData.EventMagnitude = HitData.DamageAmount;
+	EventData.OptionalObject = HitData.DamageEffectClass.Get();
+	if (HitData.SourceActionTag.IsValid())
+	{
+		EventData.InstigatorTags.AddTag(HitData.SourceActionTag);
+	}
+
+	if (HitData.InstigatorCharacter != nullptr && HitData.InstigatorCharacter->GetADAbilitySystemComponent() != nullptr)
+	{
+		EventData.ContextHandle = HitData.InstigatorCharacter->GetADAbilitySystemComponent()->MakeEffectContext();
+		EventData.ContextHandle.AddInstigator(HitData.InstigatorCharacter, HitData.InstigatorCharacter);
+		EventData.ContextHandle.AddHitResult(HitData.HitResult, true);
+	}
 
 	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(HitData.TargetCharacter, HitData.HitEventTag, EventData);
 
