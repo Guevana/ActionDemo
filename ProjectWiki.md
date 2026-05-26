@@ -2,7 +2,7 @@
 
 维护目标：本文件是可查询项目数据库，不是开发日志。新增信息优先更新已有记录；历史只保留为索引，技术细节归入对应数据库条目。
 
-文档状态：2026-05-24 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路与角色插槽驱动命中窗口已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换与武器插槽来源 C++ 已编译通过，待编辑器资产验证。
+文档状态：2026-05-26 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换 C++ 已编译通过。
 
 ## 查询索引
 * 项目边界：`Project Snapshot`
@@ -64,7 +64,7 @@
 | LC-ActionContext | 如何防旧回调污染当前动作 | `UADCombatComponent` 维护 `CurrentActionTag/Serial/AbilityClass/StartTime` 与 `LastCompletedActionTag/Serial`；动作开始生成递增 Serial；动作结束必须 `NotifyActionEndedByContext(ActionTag, Serial)` 校验，过期回调忽略 | 已实现 |
 | LC-CancelWindow | 取消窗口和预输入 | Montage `AD Cancel Window` 驱动 `Begin/EndCancelWindowFromNotify()`；组件用 `CancelWindowNotifyCount` 处理重叠窗口；同步 Loose Tag `Ability.Cancel.Active`；窗口开启时广播并让玩家角色重发仍有效的缓冲输入 | 已实现 |
 | LC-WeaponManagement | 武器如何生成和切换 | `UADWeaponManagerComponent` 在 BeginPlay 可按 `WeaponSpawnConfigs` 生成 `AADWeaponBase` 子类；生成参数包含 `WeaponClass`、`AttachSocketName`、`AttachRelativeTransform`，空插槽名回退到 `DefaultAttachSocketName`；生成武器注册到 `WeaponInstances`，默认隐藏未装备武器并关闭碰撞；`EquipWeaponByIndex/EquipNextWeapon/EquipPreviousWeapon` 只在管理实例列表内切换，切换后刷新当前装备索引、绑定 owner、附着角色 Mesh、广播 `OnEquippedWeaponChanged`；组件 EndPlay 可销毁自己生成的武器，不销毁手动引用的关卡武器 | C++ 已编译，资产待配置/验证 |
-| LC-HitDetection | 命中确认如何产生 | Montage `AD Hit Detection` 只给时机、插槽来源、双插槽和盒体截面配置；`UADHitDetectionComponent` 按 `SocketSource` 从 Montage 角色 Mesh 或 `UADWeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取 `StartSocketName/EndSocketName`，生成世界空间盒体 Sweep、去重并构造 `FADCombatHitEventData`；`UADCombatComponent::HandleHitConfirmed()` 补全当前攻击的 `DamageAmount/DamageEffectClass`、广播、发送 GAS GameplayEvent，并调用 Hit Receiver 接口；命中检测本身仍不直接扣血 | C++ 已编译，武器来源待编辑器验证 |
+| LC-HitDetection | 命中确认如何产生 | Montage `AD Hit Detection` 只给时机、插槽来源、双插槽和盒体截面配置；`UADHitDetectionComponent` 按 `SocketSource` 从 Montage 角色 Mesh 或 `UADWeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取 `StartSocketName/EndSocketName`，生成世界空间盒体 Sweep、去重并构造 `FADCombatHitEventData`；`UADCombatComponent::HandleHitConfirmed()` 补全当前攻击的 `DamageAmount/DamageEffectClass`、广播、发送 GAS GameplayEvent，并调用 Hit Receiver 接口；命中检测本身仍不直接扣血 | 已验收 |
 | LC-Damage-ReceiveHit | 命中如何转为扣血和死亡 | 攻击 Ability CDO 提供 `DamageAmount/DamageEffectClass`；`Event.Hit.Confirm` 使用 `EventMagnitude` 携带伤害、`OptionalObject` 携带 GE 类、`Data.Damage` SetByCaller 修改 `Health`；敌人默认授予 `UADGameplayAbility_ReceiveHit`；`UADAttributeSet` Clamp 生命/体力；`AADCharacterBase` 在 Health 归零时加 `State.Dead`、取消 Ability、停止移动并广播死亡 | 首版已验收 |
 | LC-TargetLock | 锁敌目标事实在哪里 | `UADGA_Target_Lock` 按 `Input.Target.Lock` 激活；`UADTargetingComponent::CurrentTarget` 是唯一事实；`AcquireBestTarget()` 按半径、视角、距离、方向和可选 LineTrace 评分；重复输入取消 Ability 并清空目标 | 已实现 |
 | LC-EnemyAI | 敌人首版近战 AI | `AADEnemyAIController` 持有感知、`CombatTarget` 和 StateTree；同步目标到 Pawn 的 TargetingComponent；`UADStateTreeEvaluator_EnemyCombatSnapshot` 输出目标/距离/攻击范围；`UADStateTreeTask_MoveToEnemyTarget` 追击到攻击范围；`AADEnemyCharacter` 授予启动 Ability 并接收命中 | 首版 |
@@ -103,10 +103,10 @@
 | 默认伤害 GE | `UADGameplayEffect_Damage` 为 instant GE；要求调用方设置 `Data.Damage`，当前受击 Ability 传负值扣血 | 首版已验收 |
 | 武器生成/切换 | 角色 `WeaponManagerComponent` 配置 `WeaponSpawnConfigs`；每项指定 `AADWeaponBase` 蓝图类、附着 Socket 和相对变换；`InitialWeaponIndex` 指定默认装备；`DefaultAttachSocketName` 用作空 Socket 回退；未装备武器默认隐藏且关闭碰撞；切换函数由蓝图、输入或 Ability 调用 | C++ 已编译，资产待配置/验证 |
 | 取消窗口 | Montage 添加 `AD Cancel Window` | 资产侧配置 |
-| 命中窗口 | Montage 添加 `AD Hit Detection`，配置 `SocketSource`、`StartSocketName`、`EndSocketName`、`SocketAxisPadding`、`CrossSectionHalfExtent`、TraceChannel、HitEventTag、Debug；`SocketSource=CharacterMesh` 时从 Montage 角色 Mesh 读取插槽，`SocketSource=EquippedWeapon` 时从角色 `WeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取插槽；推荐插槽名 `Hit_Start` / `Hit_End`，实际名称以每个 Notify 配置为准；插槽缺失、武器未设置或两插槽距离过短时本窗口跳过 | 角色来源已验收，武器来源待编辑器验证 |
+| 命中窗口 | Montage 添加 `AD Hit Detection`，配置 `SocketSource`、`StartSocketName`、`EndSocketName`、`SocketAxisPadding`、`CrossSectionHalfExtent`、TraceChannel、HitEventTag、Debug；`SocketSource=CharacterMesh` 时从 Montage 角色 Mesh 读取插槽，`SocketSource=EquippedWeapon` 时从角色 `WeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取插槽；推荐插槽名 `Hit_Start` / `Hit_End`，实际名称以每个 Notify 配置为准；插槽缺失、武器未设置或两插槽距离过短时本窗口跳过 | 角色来源与武器来源均已验收 |
 | 敌人配置 | `UADEnemyConfigData` 配置 StartupAbilities、AttackRange、LoseTargetDistance、SightRadius、LoseSightRadius、PeripheralVisionAngleDegrees | 首版 |
 | 连段数据 | `UADCombatActionData` 可描述派生输入和下一段 Ability | 尚未成为主数据源 |
-| 编译验收 | `ActionDemoEditor Win64 Development` 使用 `E:\UE_5.7\Engine\Build\BatchFiles\Build.bat` 编译；伤害/受击/死亡链路与角色插槽驱动命中窗口已完成编辑器场景验收；武器管理、生成、切换与武器插槽来源已通过 UHT/C++ 编译；当前完整 DLL 链接被已打开的 `UnrealEditor.exe` / Live Coding 锁定影响，需释放编辑器后再做完整链接和资产侧验证；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-24 C++ 已通过，完整链接待释放编辑器 |
+| 编译验收 | `ActionDemoEditor Win64 Development` 使用 `E:\UE_5.7\Engine\Build\BatchFiles\Build.bat` 编译；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口已完成编辑器场景验收；武器管理、生成、切换与武器插槽来源已通过 UHT/C++ 编译；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-26 已通过 |
 
 ## Planning Database
 | ID | 规划主题 | 已确认方向 | 关联记录 |
@@ -140,6 +140,7 @@
 | 2026-05-24 | 命中窗口插槽来源改为可配置：角色 Mesh 或当前装备武器 Mesh；武器只作为插槽/表现载体，命中事实仍归角色 HitDetection/Combat 组件 | `LC-HitDetection`、`MOD-HitDetection`、`MOD-Equipment-Weapon` |
 | 2026-05-24 | 武器运行时事实收口到 `UADWeaponManagerComponent`；角色基类只负责装配和兼容转发，不再直接承接武器管理职责 | `MOD-Character-Base`、`MOD-Equipment-WeaponManager`、`LC-HitDetection` |
 | 2026-05-24 | 武器生成和切换职责继续收口到 `UADWeaponManagerComponent`：生成配置、实例列表、当前装备索引、前后切换、显隐/碰撞和生命周期清理都归组件负责 | `MOD-Equipment-WeaponManager`、`LC-WeaponManagement` |
+| 2026-05-26 | 武器插槽来源命中窗口已通过编辑器场景验收；`SocketSource=EquippedWeapon` 可从当前装备武器 Mesh 读取命中插槽并完成命中链路 | `LC-HitDetection`、`MOD-HitDetection`、`MOD-Equipment-WeaponManager` |
 
 ## Change Ledger
 | 日期 | 摘要 | 详情 |
@@ -157,6 +158,7 @@
 | 2026-05-24 | 命中检测支持从当前装备武器 Mesh 读取插槽 | `MOD-HitDetection`、`MOD-Equipment-Weapon`、`LC-HitDetection` |
 | 2026-05-24 | 新增武器管理组件，集中装备武器查询、切换、owner 绑定和装备变化广播 | `MOD-Equipment-WeaponManager`、`MOD-Character-Base`、`LC-HitDetection` |
 | 2026-05-24 | 武器管理组件新增按配置生成武器、附着角色 Mesh、按索引/前后切换和生成实例清理 | `MOD-Equipment-WeaponManager`、`LC-WeaponManagement` |
+| 2026-05-26 | 武器来源命中窗口编辑器验收通过 | `MOD-HitDetection`、`LC-HitDetection`、`PLAN-Verify-01` |
 | 2026-04-28 | 动作实例跟踪与 Combat 动作上下文 | `LC-Combo`、`LC-ActionContext` |
 | 2026-04-27 | 攻击 Ability 生命周期统一化 | `LC-AttackAbility` |
 | 2026-04-26 | 连段旧 Ability 主动取消和旧回调保护 | `LC-AttackAbility`、`LC-ActionContext` |
