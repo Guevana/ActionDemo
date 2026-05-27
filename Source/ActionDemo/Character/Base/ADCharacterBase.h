@@ -62,6 +62,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
 	bool IsDead() const;
 
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
+	bool IsHitReacting() const;
+
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "ActionDemo|Character")
 	void HandleDeath();
 	virtual void HandleDeath_Implementation();

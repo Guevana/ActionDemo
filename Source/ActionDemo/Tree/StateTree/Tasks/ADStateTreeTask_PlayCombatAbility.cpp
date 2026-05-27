@@ -26,6 +26,11 @@ EStateTreeRunStatus UADStateTreeTask_PlayCombatAbility::EnterState(FStateTreeExe
 		return EStateTreeRunStatus::Failed;
 	}
 
+	if (Character->IsDead() || Character->IsHitReacting())
+	{
+		return EStateTreeRunStatus::Failed;
+	}
+
 	if (ConsumedInputTag.IsValid())
 	{
 		FGameplayTag BufferedInputTag;
@@ -92,12 +97,15 @@ void UADStateTreeTask_PlayCombatAbility::ExitState(FStateTreeExecutionContext& C
 	
 	if (RunStatus == EStateTreeRunStatus::Failed)
 	{
+		const AActor* OwnerActor = GetOwnerActor(Context);
+		const UObject* AbilityCDO = AbilityClass != nullptr ? AbilityClass.GetDefaultObject() : nullptr;
+
 		UE_LOG(
 			LogTemp,
 			Warning,
 			TEXT("[ActionDemo] PlayCombatAbility Task failed. Owner=%s AbilityClass=%s ExpectedActionTag=%s"),
-			*GetOwnerActor(Context)->GetName(),
-			*AbilityClass.GetDefaultObject()->GetName(),
+			*GetNameSafe(OwnerActor),
+			*GetNameSafe(AbilityCDO),
 			*ExpectedActionTag.ToString());
 	}
 	

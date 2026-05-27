@@ -42,6 +42,12 @@ public:
 	bool IsTargetInAttackRange() const;
 
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|AI")
+	bool IsControlledEnemyHitReacting() const;
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|AI")
+	bool IsControlledEnemyDead() const;
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|AI")
 	float GetAttackRange() const;
 
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|AI")

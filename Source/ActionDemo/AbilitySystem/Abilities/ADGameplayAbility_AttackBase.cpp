@@ -13,6 +13,8 @@ UADGameplayAbility_AttackBase::UADGameplayAbility_AttackBase()
 {
 	InputTag = ADGameplayTags::Input_Attack_Light;
 	DamageEffectClass = UADGameplayEffect_Damage::StaticClass();
+	ActivationBlockedTags.AddTag(ADGameplayTags::State_Dead);
+	ActivationBlockedTags.AddTag(ADGameplayTags::State_Hit_React);
 }
 
 void UADGameplayAbility_AttackBase::ActivateAbility(

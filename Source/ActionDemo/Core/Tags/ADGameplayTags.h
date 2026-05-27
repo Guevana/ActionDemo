@@ -11,6 +11,7 @@ namespace ADGameplayTags
 {
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Action_Airborne);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Dead);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(State_Hit_React);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Cancel_Active);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Light_01);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Ability_Attack_Light_02);

@@ -19,18 +19,24 @@ protected:
 	void RefreshSnapshot(FStateTreeExecutionContext& Context);
 
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	TObjectPtr<AActor> CombatTarget = nullptr;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	float TargetDistance = TNumericLimits<float>::Max();
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bHasCombatTarget = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bIsTargetInAttackRange = false;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bHasActiveAction = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	bool bIsHitReacting = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
+	bool bIsDead = false;
 };

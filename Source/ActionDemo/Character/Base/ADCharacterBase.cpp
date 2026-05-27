@@ -92,6 +92,11 @@ bool AADCharacterBase::IsDead() const
 	return bIsDead;
 }
 
+bool AADCharacterBase::IsHitReacting() const
+{
+	return AbilitySystemComponent != nullptr && AbilitySystemComponent->HasMatchingGameplayTag(ADGameplayTags::State_Hit_React);
+}
+
 void AADCharacterBase::InitializeAbilityActorInfo()
 {
 	if (AbilitySystemComponent != nullptr)

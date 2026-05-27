@@ -4,6 +4,7 @@ namespace ADGameplayTags
 {
 	UE_DEFINE_GAMEPLAY_TAG(State_Action_Airborne, "State.Action.Airborne");
 	UE_DEFINE_GAMEPLAY_TAG(State_Dead, "State.Dead");
+	UE_DEFINE_GAMEPLAY_TAG(State_Hit_React, "State.Hit.React");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Cancel_Active, "Ability.Cancel.Active");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Light_01, "Ability.Attack.Light.01");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Light_02, "Ability.Attack.Light.02");

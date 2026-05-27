@@ -20,13 +20,23 @@ void UADStateTreeEvaluator_EnemyCombatSnapshot::Tick(FStateTreeExecutionContext&
 
 void UADStateTreeEvaluator_EnemyCombatSnapshot::RefreshSnapshot(FStateTreeExecutionContext& Context)
 {
-	const AADEnemyAIController* EnemyController = Cast<AADEnemyAIController>(GetOwnerActor(Context));
+	const AActor* OwnerActor = GetOwnerActor(Context);
+	const AADCharacterBase* Character = ADStateTreeContextHelpers::ResolveCharacter(OwnerActor);
+
+	const AADEnemyAIController* EnemyController = Cast<AADEnemyAIController>(OwnerActor);
+	if (EnemyController == nullptr && Character != nullptr)
+	{
+		EnemyController = Cast<AADEnemyAIController>(Character->GetController());
+	}
+
 	if (EnemyController != nullptr)
 	{
 		CombatTarget = EnemyController->GetCombatTarget();
 		TargetDistance = EnemyController->GetTargetDistance();
 		bHasCombatTarget = EnemyController->HasCombatTarget();
 		bIsTargetInAttackRange = EnemyController->IsTargetInAttackRange();
+		bIsHitReacting = EnemyController->IsControlledEnemyHitReacting();
+		bIsDead = EnemyController->IsControlledEnemyDead();
 	}
 	else
 	{
@@ -34,8 +44,14 @@ void UADStateTreeEvaluator_EnemyCombatSnapshot::RefreshSnapshot(FStateTreeExecut
 		TargetDistance = TNumericLimits<float>::Max();
 		bHasCombatTarget = false;
 		bIsTargetInAttackRange = false;
+		bIsHitReacting = false;
+		bIsDead = false;
 	}
 
-	const AADCharacterBase* Character = ADStateTreeContextHelpers::ResolveCharacter(GetOwnerActor(Context));
 	bHasActiveAction = Character != nullptr && Character->GetCombatComponent() != nullptr && Character->GetCombatComponent()->HasActiveAction();
+	if (Character != nullptr)
+	{
+		bIsHitReacting = bIsHitReacting || Character->IsHitReacting();
+		bIsDead = bIsDead || Character->IsDead();
+	}
 }

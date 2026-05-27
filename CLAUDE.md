@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ActionDemo (Project WutheringStyle) — a high-mobility ARPG combat system demo targeting a "Wuthering Waves"-style feel, built in Unreal Engine 5.7 using GAS + StateTree + component-based combat framework.
+ActionDemo (Project WutheringStyle) is a high-mobility ARPG combat system demo built in Unreal Engine 5.7.
 
-Key plugins enabled: GameplayAbilities, StateTree, GameplayStateTree, MotionWarping, EnhancedInput, AIModule.
+This file is only a quick entry point for Claude Code. The authoritative project rules and current facts live in `ProjectContext.md` and `ProjectWiki.md`; avoid duplicating detailed module or logic-chain facts here.
 
 ## Reading Order
 
@@ -15,7 +15,13 @@ When context is missing, read in this order:
 2. `ProjectWiki.md` — query-oriented database of modules, logic chains, tags, assets, decisions
 3. Relevant source files
 
-These two files are the authoritative project documentation. If you modify key logic, update `ProjectWiki.md`'s corresponding entries. Only update `ProjectContext.md` for long-term stable rule changes.
+These two files are the authoritative project documentation. If they conflict with this file, follow `ProjectContext.md` and `ProjectWiki.md`.
+
+Wiki update threshold:
+- Do not record temporary experiments or abandoned branches.
+- After key logic compiles and the implementation direction is settled, update the matching `ProjectWiki.md` database entry.
+- Mark unfinished editor validation as `C++ 首版`, `待验证`, or `资产待配`; use `已验收` only after the relevant editor scenario has actually run through.
+- Only update `ProjectContext.md` for long-term stable rule changes.
 
 ## Build Commands
 
@@ -34,43 +40,10 @@ Editor can also be launched via Rider/VS by opening `ActionDemo.sln`.
 
 The project uses **Rider** as the primary IDE (the `.idea/` directory is present).
 
-## Architecture Summary
+If `E:\UE_5.7` does not exist on the current machine, detect the local UE 5.7 installation path or ask before inventing a replacement path.
 
-- **Engine**: UE 5.7, C++ + Blueprint
-- **Module**: Single Runtime module `ActionDemo` in `Source/ActionDemo/`
-- **Key dependencies**: GameplayAbilities, StateTree, GameplayStateTree, MotionWarping, EnhancedInput, AIModule
-- **Architecture**: C++ handles core logic; Blueprint is for class inheritance, asset configuration, animation/VFX/camera/UI polish
+## Architecture and Coding
 
-### Source Directory Layout
+Use `ProjectContext.md` for stable architecture boundaries and coding rules. Use `ProjectWiki.md` for current module responsibilities, logic chains, tags, asset/editor state, plans, decisions, and validation status.
 
-| Directory | Responsibility |
-|-----------|---------------|
-| `Core/Tags/` | Native GameplayTags — single source of truth |
-| `Character/Base/` | `ADCharacterBase` — combat entity base class, assembles ASC + components |
-| `Character/Player/` | `ADPlayerCharacter` — camera, player StateTree, cancel-window input re-dispatch |
-| `Character/Enemy/` | `ADEnemyCharacter` — enemy config, startup ability grants, hit reception |
-| `AbilitySystem/` | ASC subclass, ability base classes, attack ability, target-lock ability, attributes, combat data assets |
-| `Components/Combat/` | Combat context, hit detection, hit types and receiver interface |
-| `Components/Input/` | Input buffering (0.35s default window) |
-| `Components/Target/` | Target acquisition, scoring, and lock-on |
-| `Tree/StateTree/` | Conditions, evaluators, and tasks for both player and enemy StateTrees |
-| `Input/Data/` | Input config data asset — MappingContext → InputAction → InputTag → controller functions |
-| `AI/` | Enemy AIController — perception, combat target, enemy StateTree |
-| `Animation/Notifies/` | Cancel window and hit detection AnimNotifyStates — timing sources for montages |
-| `Game/` | GameMode, PlayerController (EnhancedInput binding, input buffering dispatch, ability grants) |
-
-### Core Design Rules
-
-- **Tag-driven**: action states, cancel windows, inputs, events, and blocking conditions use GameplayTags
-- **Atomic abilities**: each independently lifecycle-managed action is a `UGameplayAbility`; only one attack ability active per character at a time
-- **Action context serial IDs**: prevent stale callbacks from old abilities/notifies/tasks from corrupting the current action
-- **StateTree decides "what to do"; GameplayAbility decides "how to do it"; Components maintain queryable facts**
-- **Montage-driven attack lifecycle**: attacks are driven by `UAbilityTask_PlayMontageAndWait`; cancel windows and hit windows come from AnimNotifyStates on the montage
-
-## Coding Conventions
-
-- Comments on key functions and non-obvious logic use **Chinese**
-- Unresolved details marked with `//TODO`
-- UE object members prefer `TObjectPtr<T>`
-- Do not fabricate module/class/function/asset paths that don't exist — verify against source or ask
-- Keep logic in the right layer: input stays in controller/input components, combat in ability system/components, presentation in animation/notifies — don't pile everything back into character classes
+Before touching code, verify any class, module, function, tag, or asset path against the source tree, config, or Wiki. Do not fabricate Unreal symbols or asset paths.

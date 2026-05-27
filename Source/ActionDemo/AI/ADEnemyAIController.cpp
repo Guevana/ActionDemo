@@ -110,6 +110,18 @@ bool AADEnemyAIController::IsTargetInAttackRange() const
 	return FVector::DistSquared(ControlledPawn->GetActorLocation(), CombatTarget->GetActorLocation()) <= FMath::Square(AttackRange);
 }
 
+bool AADEnemyAIController::IsControlledEnemyHitReacting() const
+{
+	const AADEnemyCharacter* EnemyCharacter = GetControlledEnemy();
+	return EnemyCharacter != nullptr && EnemyCharacter->IsHitReacting();
+}
+
+bool AADEnemyAIController::IsControlledEnemyDead() const
+{
+	const AADEnemyCharacter* EnemyCharacter = GetControlledEnemy();
+	return EnemyCharacter != nullptr && EnemyCharacter->IsDead();
+}
+
 float AADEnemyAIController::GetAttackRange() const
 {
 	return AttackRange;

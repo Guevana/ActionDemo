@@ -21,15 +21,15 @@ protected:
 	void RefreshSnapshot(FStateTreeExecutionContext& Context);
 
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	FGameplayTag BufferedInputTag;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	FGameplayTag CurrentActionTag;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	FGameplayTag LastCompletedActionTag;
 
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|StateTree")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Output")
 	bool bHasActiveAction = false;
 };

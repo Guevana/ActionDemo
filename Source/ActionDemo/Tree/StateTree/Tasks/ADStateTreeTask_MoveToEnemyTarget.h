@@ -4,6 +4,8 @@
 #include "Blueprint/StateTreeTaskBlueprintBase.h"
 #include "ADStateTreeTask_MoveToEnemyTarget.generated.h"
 
+class AADEnemyAIController;
+
 /**
  * Enemy StateTree 追击任务。
  * 以 AIController 当前 CombatTarget 为目标移动，进入攻击范围后返回成功。
@@ -19,6 +21,8 @@ public:
 protected:
 	virtual EStateTreeRunStatus EnterState(FStateTreeExecutionContext& Context, const FStateTreeTransitionResult& Transition) override;
 	virtual EStateTreeRunStatus Tick(FStateTreeExecutionContext& Context, const float DeltaTime) override;
+
+	AADEnemyAIController* ResolveEnemyController(FStateTreeExecutionContext& Context) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "ActionDemo|StateTree", meta = (ClampMin = "0.0"))
 	float AcceptanceRadius = 160.0f;
