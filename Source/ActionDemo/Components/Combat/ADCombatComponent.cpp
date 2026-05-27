@@ -105,6 +105,17 @@ void UADCombatComponent::ResetCancelWindowState()
 	SyncCancelWindowTag();
 }
 
+void UADCombatComponent::ResetCombatState()
+{
+	CurrentActionTag = FGameplayTag();
+	CurrentActionSerial = INDEX_NONE;
+	CurrentActionAbilityClass = nullptr;
+	CurrentActionStartTime = -1.0f;
+	LastCompletedActionTag = FGameplayTag();
+	LastCompletedActionSerial = INDEX_NONE;
+	ResetCancelWindowState();
+}
+
 bool UADCombatComponent::HasActiveAction() const
 {
 	return CurrentActionTag.IsValid();
@@ -114,6 +125,16 @@ void UADCombatComponent::HandleHitConfirmed(const FADCombatHitEventData& HitData
 {
 	FADCombatHitEventData ResolvedHitData = HitData;
 	FillHitDataFromCurrentAction(ResolvedHitData);
+
+	if (ResolvedHitData.InstigatorCharacter == nullptr || ResolvedHitData.TargetCharacter == nullptr)
+	{
+		return;
+	}
+
+	if (ResolvedHitData.InstigatorCharacter->IsDead() || ResolvedHitData.TargetCharacter->IsDead())
+	{
+		return;
+	}
 
 	UE_LOG(
 		LogTemp,

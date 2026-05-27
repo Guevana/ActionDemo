@@ -5,6 +5,7 @@
 #include "ADEnemyAIController.generated.h"
 
 class AADEnemyCharacter;
+class AADCharacterBase;
 class UAIPerceptionComponent;
 class UAISenseConfig_Sight;
 class UStateTreeComponent;
@@ -66,11 +67,18 @@ protected:
 	UFUNCTION()
 	void HandleCombatTargetDestroyed(AActor* DestroyedActor);
 
+	UFUNCTION()
+	void HandleControlledEnemyDeath(AADCharacterBase* DeadCharacter);
+
+	UFUNCTION()
+	void HandleCombatTargetDeath(AADCharacterBase* DeadCharacter);
+
 	bool IsValidCombatTarget(const AActor* Actor) const;
 	AADEnemyCharacter* GetControlledEnemy() const;
 	void ConfigureFromEnemyConfig();
 	void SyncCombatTargetToPawn() const;
 	void ValidateCombatTarget();
+	void StopCombatLogicForDeath();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|StateTree")
 	TObjectPtr<UStateTreeComponent> CombatStateTreeComponent;
@@ -89,4 +97,6 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|AI")
 	float LoseTargetDistance = 2400.0f;
+
+	bool bCombatLogicStoppedForDeath = false;
 };

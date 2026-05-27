@@ -6,7 +6,7 @@
 
 复杂链路维护：表格行只保留可查询摘要；当单条逻辑链需要承载多阶段流程、边界条件或验收步骤时，可在对应数据库下追加同 ID 小节，避免把所有细节塞进一行导致后续维护遗漏。
 
-文档状态：2026-05-26 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换 C++ 已编译通过；受击硬直/反馈 C++ 首版已编译通过，待编辑器验证。
+文档状态：2026-05-27 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换 C++ 已编译通过。
 
 ## 查询索引
 * 项目边界：`Project Snapshot`
@@ -27,37 +27,37 @@
 | 主模块 | `Source/ActionDemo` Runtime |
 | 依赖 | GameplayAbilities、StateTree、GameplayStateTree、MotionWarping、Enhanced Input、AIModule |
 | 架构 | C++ 负责核心链路，蓝图负责配置和表现微调 |
-| 已有重点 | 轻攻击连段、取消窗口、输入缓冲、锁敌、命中事件、C++ 伤害/受击/死亡首版、敌人近战 AI 首版、武器生成/切换首版 |
-| 主要缺口 | 受击硬直编辑器验证、弹刀、极限闪避、空中连段、Motion Warping 实装 |
+| 已有重点 | 轻攻击连段、取消窗口、输入缓冲、锁敌、命中事件、C++ 伤害/受击/死亡首版、敌人近战 AI 首版、武器生成/切换首版、武器来源命中窗口、受击硬直/反馈、死亡表现清理 |
+| 主要缺口 | 弹刀、极限闪避、空中连段、Motion Warping 实装 |
 
 ## Module Database
 | ID | 主要文件 | 查询事实 | 状态 |
 | --- | --- | --- | --- |
 | MOD-Core-Tags | `Core/Tags/ADGameplayTags.*` | Native GameplayTags 唯一集中声明处 | 已实现 |
-| MOD-Character-Base | `Character/Base/ADCharacterBase.*` | 战斗实体基类；组装 ASC、AttributeSet、Combat、AbilityQueue、Targeting、HitDetection、WeaponManager；`Get/SetEquippedWeapon` 仅委托武器管理组件；监听 Health 归零并进入死亡入口 | 已实现 |
+| MOD-Character-Base | `Character/Base/ADCharacterBase.*` | 战斗实体基类；组装 ASC、AttributeSet、Combat、AbilityQueue、Targeting、HitDetection、WeaponManager；`Get/SetEquippedWeapon` 仅委托武器管理组件；监听 Health 归零并进入死亡入口；死亡时清理 Ability、硬直/取消标签、Combat 状态、输入缓冲、命中窗口和锁定目标，并提供 `K2_OnDeath` 表现入口 | 已实现，死亡清理已验收 |
 | MOD-Character-Player | `Character/Player/ADPlayerCharacter.*` | 玩家 Pawn；相机、玩家 StateTree、取消窗口预输入重发 | 已实现 |
 | MOD-Character-Enemy | `Character/Enemy/ADEnemyCharacter.*` | 敌人 Pawn；敌人配置、启动 Ability 授予、默认受击 Ability 授予、受击入口、死亡广播 | 已实现 |
-| MOD-AI-Enemy | `AI/ADEnemyAIController.*` | 感知、CombatTarget、敌人 StateTree、追击和范围判断 | 首版 |
+| MOD-AI-Enemy | `AI/ADEnemyAIController.*` | 感知、CombatTarget、敌人 StateTree、追击和范围判断；目标死亡时清空 CombatTarget，受控敌人死亡时停止移动、StateTree 和感知记忆 | 首版，死亡清理已验收 |
 | MOD-Input | `Input/Data/ADInputConfigData.h` | MappingContext、InputAction -> InputTag -> Controller 函数、StartupAbilities | 已实现 |
 | MOD-PlayerController | `Game/ADPlayerController.*` | Enhanced Input 绑定、输入缓冲、ASC 激活、StateTree 事件、玩家 Ability 授予 | 已实现 |
 | MOD-ASC | `AbilitySystem/ADAbilitySystemComponent.*` | 按 InputTag / AbilityClass 激活 Ability；攻击连段前取消旧攻击 Ability | 已实现 |
 | MOD-Ability-Base | `AbilitySystem/Abilities/ADGameplayAbility.*` | InputTag、AbilityTag、重复输入取消、蓝图扩展点 | 已实现 |
 | MOD-Ability-Attack | `AbilitySystem/Abilities/ADGameplayAbility_AttackBase.*` | 攻击登记、Montage 生命周期、默认时长兜底、旧 Montage 停止、命中伤害值与伤害 GE 配置；死亡/受击硬直状态下阻止攻击激活 | 已实现 |
-| MOD-Ability-ReceiveHit | `AbilitySystem/Abilities/ADGameplayAbility_ReceiveHit.*` | 受击 Ability；由 `Event.Hit.Confirm` 触发，目标侧应用伤害 GE，忽略无敌/死亡目标；扣血成功且未死亡时进入 `State.Hit.React` 硬直，停止移动、可取消攻击、可播放受击 Montage，持续时间结束后恢复 | C++ 首版，编辑器待验证 |
+| MOD-Ability-ReceiveHit | `AbilitySystem/Abilities/ADGameplayAbility_ReceiveHit.*` | 受击 Ability；由 `Event.Hit.Confirm` 触发，目标侧应用伤害 GE，忽略无敌/死亡目标；扣血成功且未死亡时进入 `State.Hit.React` 硬直，停止移动、可取消攻击、可播放受击 Montage，持续时间结束后恢复 | 已验收 |
 | MOD-Effect-Damage | `AbilitySystem/Effects/ADGameplayEffect_Damage.*` | 默认即时伤害 GE；通过 `SetByCaller(Data.Damage)` 修改 `Health` | 首版已验收 |
 | MOD-Ability-TargetLock | `AbilitySystem/Abilities/ADGA_Target_Lock.*` | 锁敌 Ability；目标事实委托给 TargetingComponent | 已实现 |
 | MOD-Data-CombatAction | `AbilitySystem/Data/ADCombatActionData.h` | 派生输入、下一段 Ability、空中允许标记 | 骨架 |
 | MOD-Equipment-Weapon | `Equipment/ADWeaponBase.*` | 简单武器 Actor 基类；提供 Weapon Mesh 和持有者引用，供武器管理组件绑定角色 owner、供命中检测读取武器插槽 | 首版，C++ 已编译 |
 | MOD-Equipment-WeaponManager | `Components/Equipment/ADWeaponManagerComponent.*` | 角色武器事实源；按 `FADWeaponSpawnConfig` 生成武器实例、附着到角色 Mesh、维护武器实例列表和当前装备索引；切换时更新当前装备武器、显隐/碰撞状态、owner 绑定和装备变化广播；提供装备武器、武器 Mesh、按索引/前后切换查询函数 | 首版，C++ 已编译 |
 | MOD-Attributes | `AbilitySystem/Attributes/ADAttributeSet.*` | Health、MaxHealth、Stamina、MaxStamina；默认值、Clamp、GE 执行后修正 | 首版已验收 |
-| MOD-Combat | `Components/Combat/ADCombatComponent.*` | 当前动作上下文、动作实例编号、取消窗口、命中确认入口、命中伤害上下文补全 | 已实现 |
+| MOD-Combat | `Components/Combat/ADCombatComponent.*` | 当前动作上下文、动作实例编号、取消窗口、命中确认入口、命中伤害上下文补全；死亡清理可重置当前/最近动作和取消窗口，死亡双方不再消费命中确认 | 已实现 |
 | MOD-InputQueue | `Components/Input/ADAbilityQueueComponent.*` | InputTag 缓存、0.35 秒默认有效期、消费输入 | 已实现 |
-| MOD-Targeting | `Components/Target/ADTargetingComponent.*` | 候选目标搜索、评分、切换、目标变更广播 | 已实现 |
-| MOD-HitDetection | `Components/Combat/ADHitDetectionComponent.*` | 插槽驱动命中窗口 Sweep、同窗口去重、标准命中事件构造 | 已验收 |
+| MOD-Targeting | `Components/Target/ADTargetingComponent.*` | 候选目标搜索、评分、切换、目标变更广播；当前目标死亡时自动解锁，候选搜索排除死亡角色 | 已实现 |
+| MOD-HitDetection | `Components/Combat/ADHitDetectionComponent.*` | 插槽驱动命中窗口 Sweep、同窗口去重、标准命中事件构造；死亡发起者不能开启/维持命中窗口，死亡目标不再产生命中事件 | 已验收 |
 | MOD-HitTypes | `Components/Combat/ADCombatHitTypes.h`、`ADCombatHitReceiverInterface.h` | 标准命中数据和同步受击接口 | 已实现 |
 | MOD-AnimNotifies | `Animation/Notifies/ADAnimNotifyState_CancelWindow.*`、`ADAnimNotifyState_HitDetection.*` | 取消窗口和命中窗口时机源 | 已实现 |
 | MOD-StateTree-Player | `Tree/StateTree/Conditions/*`、`Evaluators/ADStateTreeEvaluator_CombatSnapshot.*`、`Tasks/ADStateTreeTask_PlayCombatAbility.*` | 玩家战斗条件、快照、Ability 激活和动作实例跟踪 | 已实现 |
-| MOD-StateTree-Enemy | `Evaluators/ADStateTreeEvaluator_EnemyCombatSnapshot.*`、`Tasks/ADStateTreeTask_MoveToEnemyTarget.*` | 敌人目标快照、硬直/死亡快照和追击任务；受击硬直期间追击任务停止移动并等待 | 首版 |
+| MOD-StateTree-Enemy | `Evaluators/ADStateTreeEvaluator_EnemyCombatSnapshot.*`、`Tasks/ADStateTreeTask_MoveToEnemyTarget.*` | 敌人目标快照、硬直/死亡快照和追击任务；受击硬直期间追击任务停止移动并等待 | 首版，硬直链路已验收 |
 
 ## Logic Chain Database
 | ID | 查询目标 | 当前链路 | 状态 |
@@ -69,8 +69,8 @@
 | LC-CancelWindow | 取消窗口和预输入 | Montage `AD Cancel Window` 驱动 `Begin/EndCancelWindowFromNotify()`；组件用 `CancelWindowNotifyCount` 处理重叠窗口；同步 Loose Tag `Ability.Cancel.Active`；窗口开启时广播并让玩家角色重发仍有效的缓冲输入 | 已实现 |
 | LC-WeaponManagement | 武器如何生成和切换 | `UADWeaponManagerComponent` 在 BeginPlay 可按 `WeaponSpawnConfigs` 生成 `AADWeaponBase` 子类；生成参数包含 `WeaponClass`、`AttachSocketName`、`AttachRelativeTransform`，空插槽名回退到 `DefaultAttachSocketName`；生成武器注册到 `WeaponInstances`，默认隐藏未装备武器并关闭碰撞；`EquipWeaponByIndex/EquipNextWeapon/EquipPreviousWeapon` 只在管理实例列表内切换，切换后刷新当前装备索引、绑定 owner、附着角色 Mesh、广播 `OnEquippedWeaponChanged`；组件 EndPlay 可销毁自己生成的武器，不销毁手动引用的关卡武器 | C++ 已编译，资产待配置/验证 |
 | LC-HitDetection | 命中确认如何产生 | Montage `AD Hit Detection` 只给时机、插槽来源、双插槽和盒体截面配置；`UADHitDetectionComponent` 按 `SocketSource` 从 Montage 角色 Mesh 或 `UADWeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取 `StartSocketName/EndSocketName`，生成世界空间盒体 Sweep、去重并构造 `FADCombatHitEventData`；`UADCombatComponent::HandleHitConfirmed()` 补全当前攻击的 `DamageAmount/DamageEffectClass`、广播、发送 GAS GameplayEvent，并调用 Hit Receiver 接口；命中检测本身仍不直接扣血 | 已验收 |
-| LC-Damage-ReceiveHit | 命中如何转为扣血和死亡 | 攻击 Ability CDO 提供 `DamageAmount/DamageEffectClass`；`Event.Hit.Confirm` 使用 `EventMagnitude` 携带伤害、`OptionalObject` 携带 GE 类、`Data.Damage` SetByCaller 修改 `Health`；敌人默认授予 `UADGameplayAbility_ReceiveHit`；`UADAttributeSet` Clamp 生命/体力；`AADCharacterBase` 在 Health 归零时加 `State.Dead`、取消 Ability、停止移动并广播死亡 | 首版已验收 |
-| LC-HitReact | 受击硬直如何阻断行动 | `UADGameplayAbility_ReceiveHit` 扣血成功后，若目标未死亡且 `HitReactDuration > 0`，添加 Loose Tag `State.Hit.React`，按配置取消当前攻击 Ability、停止 CharacterMovement 和 Controller MoveTo、可播放 `HitReactMontage`，由 `UAbilityTask_WaitDelay` 在持续时间后移除标签；受击 Ability 支持重复命中重触发；攻击 Ability 和 StateTree 攻击任务在死亡/硬直时不可启动；敌人追击任务在硬直期间持续 StopMovement 并保持 Running | C++ 首版，编辑器待验证 |
+| LC-Damage-ReceiveHit | 命中如何转为扣血和死亡 | 攻击 Ability CDO 提供 `DamageAmount/DamageEffectClass`；`Event.Hit.Confirm` 使用 `EventMagnitude` 携带伤害、`OptionalObject` 携带 GE 类、`Data.Damage` SetByCaller 修改 `Health`；敌人默认授予 `UADGameplayAbility_ReceiveHit`；`UADAttributeSet` Clamp 生命/体力；`AADCharacterBase` 在 Health 归零时加 `State.Dead`、取消 Ability、清理硬直/取消标签、重置 Combat/输入/命中窗口/锁敌、停止移动并广播死亡 | 已验收 |
+| LC-HitReact | 受击硬直如何阻断行动 | `UADGameplayAbility_ReceiveHit` 扣血成功后，若目标未死亡且 `HitReactDuration > 0`，添加 Loose Tag `State.Hit.React`，按配置取消当前攻击 Ability、停止 CharacterMovement 和 Controller MoveTo、可播放 `HitReactMontage`，由 `UAbilityTask_WaitDelay` 在持续时间后移除标签；受击 Ability 支持重复命中重触发；攻击 Ability 和 StateTree 攻击任务在死亡/硬直时不可启动；敌人追击任务在硬直期间持续 StopMovement 并保持 Running | 已验收 |
 | LC-TargetLock | 锁敌目标事实在哪里 | `UADGA_Target_Lock` 按 `Input.Target.Lock` 激活；`UADTargetingComponent::CurrentTarget` 是唯一事实；`AcquireBestTarget()` 按半径、视角、距离、方向和可选 LineTrace 评分；重复输入取消 Ability 并清空目标 | 已实现 |
 | LC-EnemyAI | 敌人首版近战 AI | `AADEnemyAIController` 持有感知、`CombatTarget` 和 StateTree；同步目标到 Pawn 的 TargetingComponent；`UADStateTreeEvaluator_EnemyCombatSnapshot` 输出目标/距离/攻击范围；`UADStateTreeTask_MoveToEnemyTarget` 追击到攻击范围；`AADEnemyCharacter` 授予启动 Ability 并接收命中 | 首版 |
 
@@ -105,19 +105,20 @@
 | 验证入口 | `DevelopMap_1` 引用 `BP_Gamemode_dev`；`BP_Gamemode_dev` 指向 `BP_PlayerCharacter` 和 `BP_PlayerController`，用于资产侧输入/Ability 验证 | 资产侧配置 |
 | 轻攻击 Ability | 实际资产为 `GA_Player_LightAttack_1`、`GA_Player_LightAttack_2`、`GA_Player_LightAttack_3`；`DA_PlayerConfig` 和 `ST_PlayerCombat` 已引用 | 资产存在，编辑器流程待验证 |
 | 攻击参数 | `AttackMontage`、`DefaultAttackDuration`、`bAutoPlayMontage`、`bAutoEndAbility`、`CancelMontageBlendOutTime`、`ActionData`、`DamageAmount`、`DamageEffectClass` | 已实现 |
-| 受击 Ability | `UADGameplayAbility_ReceiveHit` 默认监听 `Event.Hit.Confirm`；敌人 `DefaultHitReactionAbilityClass` 默认指向该 C++ Ability，也可在蓝图子类替换；硬直参数包含 `HitReactDuration`、`HitReactMontage`、`HitReactMontageRate`、`bCancelActiveAttackOnHit`、`bStopMovementOnHit` | 伤害扣血已验收，硬直 C++ 已编译待验证 |
+| 受击 Ability | `UADGameplayAbility_ReceiveHit` 默认监听 `Event.Hit.Confirm`；敌人 `DefaultHitReactionAbilityClass` 默认指向该 C++ Ability，也可在蓝图子类替换；硬直参数包含 `HitReactDuration`、`HitReactMontage`、`HitReactMontageRate`、`bCancelActiveAttackOnHit`、`bStopMovementOnHit` | 伤害扣血与受击硬直/反馈均已验收 |
 | 默认伤害 GE | `UADGameplayEffect_Damage` 为 instant GE；要求调用方设置 `Data.Damage`，当前受击 Ability 传负值扣血 | 首版已验收 |
 | 武器生成/切换 | 角色 `WeaponManagerComponent` 配置 `WeaponSpawnConfigs`；每项指定 `AADWeaponBase` 蓝图类、附着 Socket 和相对变换；`InitialWeaponIndex` 指定默认装备；`DefaultAttachSocketName` 用作空 Socket 回退；未装备武器默认隐藏且关闭碰撞；切换函数由蓝图、输入或 Ability 调用 | C++ 已编译，资产待配置/验证 |
 | 取消窗口 | Montage 添加 `AD Cancel Window` | 资产侧配置 |
 | 命中窗口 | Montage 添加 `AD Hit Detection`，配置 `SocketSource`、`StartSocketName`、`EndSocketName`、`SocketAxisPadding`、`CrossSectionHalfExtent`、TraceChannel、HitEventTag、Debug；`SocketSource=CharacterMesh` 时从 Montage 角色 Mesh 读取插槽，`SocketSource=EquippedWeapon` 时从角色 `WeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取插槽；推荐插槽名 `Hit_Start` / `Hit_End`，实际名称以每个 Notify 配置为准；插槽缺失、武器未设置或两插槽距离过短时本窗口跳过 | 角色来源与武器来源均已验收 |
 | 敌人配置 | `UADEnemyConfigData` 配置 StartupAbilities、AttackRange、LoseTargetDistance、SightRadius、LoseSightRadius、PeripheralVisionAngleDegrees | 首版 |
 | 连段数据 | `UADCombatActionData` 可描述派生输入和下一段 Ability | 尚未成为主数据源 |
-| 编译验收 | `ActionDemoEditor Win64 Development` 优先使用 `Project Snapshot` 记录的 UE 5.7 路径编译；若路径不存在，先探测本机 UE 5.7 安装或询问。伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口已完成编辑器场景验收；武器管理、生成、切换与武器插槽来源已通过 UHT/C++ 编译；受击硬直/反馈 C++ 首版已用 `-NoHotReloadFromIDE -DisablePlugin=RiderLink` 编译通过；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-26 已通过 |
+| 编译验收 | `ActionDemoEditor Win64 Development` 优先使用 `Project Snapshot` 记录的 UE 5.7 路径编译；若路径不存在，先探测本机 UE 5.7 安装或询问。伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已完成编辑器场景验收；武器管理、生成、切换与武器插槽来源已通过 UHT/C++ 编译；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-27 已通过 |
 
 ## Planning Database
 | ID | 规划主题 | 已确认方向 | 关联记录 |
 | --- | --- | --- | --- |
-| PLAN-Combat-01 | 真实命中到受击链路 | 扣血/死亡首版已验收；受击硬直/反馈 C++ 首版已落地，待编辑器验证：攻击 Ability 携带 `DamageEffectClass/DamageAmount`，`UADCombatComponent::HandleHitConfirmed` 经 GameplayEvent 投递，目标侧 `UADGameplayAbility_ReceiveHit` 通过 GameplayEffect 修改 `Health`，Health 归零进入死亡入口，未死亡则进入 `State.Hit.React` 硬直并暂停行动。待补：编辑器硬直验收、死亡表现清理 |  `LC-HitDetection`、`LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Combat`、`MOD-Attributes` |
+| PLAN-Combat-01 | 真实命中到受击链路 | 基础闭环已验收：攻击 Ability 携带 `DamageEffectClass/DamageAmount`，`UADCombatComponent::HandleHitConfirmed` 经 GameplayEvent 投递，目标侧 `UADGameplayAbility_ReceiveHit` 通过 GameplayEffect 修改 `Health`，Health 归零进入死亡入口，未死亡则进入 `State.Hit.React` 硬直并暂停行动。后续收尾进入 `PLAN-Combat-02` |  `LC-HitDetection`、`LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Combat`、`MOD-Attributes` |
+| PLAN-Combat-02 | 死亡表现清理 | 已验收：死亡时停止移动、攻击、硬直和 AI 行为；清理或禁用命中窗口、锁敌目标、感知/追击状态；提供 `K2_OnDeath` 蓝图表现入口；敌人死亡后不再移动/攻击/进入硬直循环，玩家锁敌和命中链路不保留悬挂目标 | `LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Character-Base`、`MOD-StateTree-Enemy`、`MOD-Targeting` |
 | PLAN-Combo-01 | 数据驱动连段 | 推进 `UADCombatActionData` 成为连段派生主数据源；先扩展 `FADCombatActionTransition` 增加可选条件（取消窗口/最近完成动作匹配）；攻击 Ability 在结束/取消窗口阶段查表得出候选 `NextAbilityClass`，StateTree 仅判定输入与全局阻塞 |  `LC-Combo`、`MOD-Data-CombatAction` |
 | PLAN-Movement-01 | 锁敌与 Motion Warping | 攻击 Ability 在 Commit 阶段基于 `UADTargetingComponent::CurrentTarget` 写入 Motion Warping Target；Montage 上挂 Warp Notify 完成朝向/距离修正；未锁定时回退为根运动 |  `LC-TargetLock`、`MOD-Targeting` |
 | PLAN-Attribute-01 | 属性集与 GE 流水扩展 | 基于现有 `UADAttributeSet` 扩展攻击力、防御、韧性（HitStun 抗性）、能量等属性；建立伤害计算 `UGameplayEffectExecutionCalculation`；将 `Event.Hit.Confirm` 携带的 `SourceActionTag` 映射到伤害系数表 |  `MOD-Attributes`、`PLAN-Combat-01` |
@@ -148,6 +149,10 @@
 | 2026-05-24 | 武器生成和切换职责继续收口到 `UADWeaponManagerComponent`：生成配置、实例列表、当前装备索引、前后切换、显隐/碰撞和生命周期清理都归组件负责 | `MOD-Equipment-WeaponManager`、`LC-WeaponManagement` |
 | 2026-05-26 | 武器插槽来源命中窗口已通过编辑器场景验收；`SocketSource=EquippedWeapon` 可从当前装备武器 Mesh 读取命中插槽并完成命中链路 | `LC-HitDetection`、`MOD-HitDetection`、`MOD-Equipment-WeaponManager` |
 | 2026-05-26 | 受击硬直首版继续收口到受击 Ability：扣血后由 `UADGameplayAbility_ReceiveHit` 持有 `State.Hit.React`，敌人 AI 和攻击 Ability 只查询该状态阻断行动 | `LC-HitReact`、`MOD-Ability-ReceiveHit`、`MOD-StateTree-Enemy` |
+| 2026-05-27 | 武器来源命中窗口和受击硬直/反馈均已通过编辑器场景验收；真实命中到受击基础闭环转为已验收状态 | `PLAN-Combat-01`、`LC-HitDetection`、`LC-HitReact` |
+| 2026-05-27 | 下一阶段优先进行死亡表现清理：死亡时的移动/攻击/硬直/AI/锁敌/命中窗口状态需要形成可验收闭环 | `PLAN-Combat-02`、`LC-Damage-ReceiveHit`、`MOD-StateTree-Enemy` |
+| 2026-05-27 | 死亡清理收口为 CharacterBase 死亡入口统一清理运行态，AI、Targeting、Combat、HitDetection 只负责各自边界内的失效过滤和状态清除 | `PLAN-Combat-02`、`MOD-Character-Base`、`MOD-Targeting`、`MOD-HitDetection` |
+| 2026-05-27 | 死亡表现清理链路已通过编辑器场景验收，真实命中到受击/硬直/死亡基础战斗闭环完成 | `PLAN-Combat-02`、`LC-Damage-ReceiveHit`、`LC-HitReact` |
 
 ## Change Ledger
 | 日期 | 摘要 | 详情 |
@@ -167,6 +172,10 @@
 | 2026-05-24 | 武器管理组件新增按配置生成武器、附着角色 Mesh、按索引/前后切换和生成实例清理 | `MOD-Equipment-WeaponManager`、`LC-WeaponManagement` |
 | 2026-05-26 | 武器来源命中窗口编辑器验收通过 | `MOD-HitDetection`、`LC-HitDetection`、`PLAN-Verify-01` |
 | 2026-05-26 | 落地受击硬直/反馈 C++ 首版 | `MOD-Ability-ReceiveHit`、`LC-HitReact`、`PLAN-Combat-01` |
+| 2026-05-27 | 受击硬直/反馈编辑器验收通过 | `MOD-Ability-ReceiveHit`、`LC-HitReact`、`PLAN-Combat-01` |
+| 2026-05-27 | 新增死亡表现清理下一阶段规划 | `PLAN-Combat-02`、`LC-Damage-ReceiveHit` |
+| 2026-05-27 | 落地死亡表现清理 C++ 首版 | `PLAN-Combat-02`、`MOD-Character-Base`、`MOD-AI-Enemy`、`MOD-Targeting`、`MOD-HitDetection` |
+| 2026-05-27 | 死亡表现清理编辑器验收通过 | `PLAN-Combat-02`、`LC-Damage-ReceiveHit`、`MOD-Character-Base` |
 | 2026-04-28 | 动作实例跟踪与 Combat 动作上下文 | `LC-Combo`、`LC-ActionContext` |
 | 2026-04-27 | 攻击 Ability 生命周期统一化 | `LC-AttackAbility` |
 | 2026-04-26 | 连段旧 Ability 主动取消和旧回调保护 | `LC-AttackAbility`、`LC-ActionContext` |

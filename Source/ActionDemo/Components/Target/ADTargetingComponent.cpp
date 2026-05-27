@@ -126,6 +126,10 @@ void UADTargetingComponent::SetCurrentTarget(AActor* NewTarget)
 	if (IsValid(CurrentTarget))
 	{
 		CurrentTarget->OnDestroyed.RemoveDynamic(this, &UADTargetingComponent::HandleCurrentTargetDestroyed);
+		if (AADCharacterBase* CurrentTargetCharacter = Cast<AADCharacterBase>(CurrentTarget))
+		{
+			CurrentTargetCharacter->OnCharacterDeath.RemoveDynamic(this, &UADTargetingComponent::HandleCurrentTargetDeath);
+		}
 	}
 
 	CurrentTarget = NewTarget;
@@ -133,6 +137,10 @@ void UADTargetingComponent::SetCurrentTarget(AActor* NewTarget)
 	if (IsValid(CurrentTarget))
 	{
 		CurrentTarget->OnDestroyed.AddUniqueDynamic(this, &UADTargetingComponent::HandleCurrentTargetDestroyed);
+		if (AADCharacterBase* CurrentTargetCharacter = Cast<AADCharacterBase>(CurrentTarget))
+		{
+			CurrentTargetCharacter->OnCharacterDeath.AddUniqueDynamic(this, &UADTargetingComponent::HandleCurrentTargetDeath);
+		}
 		UE_LOG(LogTemp, Log, TEXT("[ActionDemo] Target locked: %s"), *CurrentTarget->GetName());
 	}
 	else if (OldTarget != nullptr)
@@ -150,7 +158,7 @@ void UADTargetingComponent::ClearCurrentTarget()
 
 bool UADTargetingComponent::HasCurrentTarget() const
 {
-	return IsValid(CurrentTarget);
+	return IsValid(CurrentTarget) && IsAliveTarget(CurrentTarget);
 }
 
 void UADTargetingComponent::HandleCurrentTargetDestroyed(AActor* DestroyedActor)
@@ -159,6 +167,20 @@ void UADTargetingComponent::HandleCurrentTargetDestroyed(AActor* DestroyedActor)
 	{
 		SetCurrentTarget(nullptr);
 	}
+}
+
+void UADTargetingComponent::HandleCurrentTargetDeath(AADCharacterBase* DeadCharacter)
+{
+	if (DeadCharacter == CurrentTarget)
+	{
+		SetCurrentTarget(nullptr);
+	}
+}
+
+bool UADTargetingComponent::IsAliveTarget(const AActor* Candidate) const
+{
+	const AADCharacterBase* CandidateCharacter = Cast<AADCharacterBase>(Candidate);
+	return CandidateCharacter == nullptr || !CandidateCharacter->IsDead();
 }
 
 void UADTargetingComponent::GatherTargetCandidates(TArray<AActor*>& OutCandidates) const
@@ -209,6 +231,11 @@ bool UADTargetingComponent::IsValidTargetCandidate(const AActor* Candidate) cons
 	}
 
 	if (!Candidate->IsA<AADCharacterBase>())
+	{
+		return false;
+	}
+
+	if (!IsAliveTarget(Candidate))
 	{
 		return false;
 	}

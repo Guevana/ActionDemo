@@ -31,6 +31,12 @@ void UADHitDetectionComponent::BeginHitWindowFromMesh(const FADHitDetectionWindo
 {
 	ResetHitWindowState();
 
+	const AADCharacterBase* OwnerCharacter = Cast<AADCharacterBase>(GetOwner());
+	if (OwnerCharacter == nullptr || OwnerCharacter->IsDead())
+	{
+		return;
+	}
+
 	ActiveConfig = InConfig;
 	if (!ActiveConfig.HitEventTag.IsValid())
 	{
@@ -78,8 +84,15 @@ void UADHitDetectionComponent::TickHitWindow(float DeltaTime)
 
 	UWorld* World = GetWorld();
 	AActor* OwnerActor = GetOwner();
-	if (World == nullptr || OwnerActor == nullptr)
+	const AADCharacterBase* OwnerCharacter = Cast<AADCharacterBase>(OwnerActor);
+	if (World == nullptr || OwnerActor == nullptr || OwnerCharacter == nullptr)
 	{
+		return;
+	}
+
+	if (OwnerCharacter->IsDead())
+	{
+		EndHitWindow();
 		return;
 	}
 
@@ -307,6 +320,11 @@ void UADHitDetectionComponent::ProcessHitResult(const FHitResult& HitResult)
 
 	AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(HitActor);
 	if (TargetCharacter == nullptr)
+	{
+		return;
+	}
+
+	if (OwnerCharacter->IsDead() || TargetCharacter->IsDead())
 	{
 		return;
 	}

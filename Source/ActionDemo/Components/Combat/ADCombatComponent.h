@@ -87,6 +87,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Combat")
 	void ResetCancelWindowState();
 
+	/** 清空当前动作、最近动作和取消窗口状态，用于死亡等强制中断场景。 */
+	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Combat")
+	void ResetCombatState();
+
 	/** 当前是否存在正在执行的动作。 */
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|Combat")
 	bool HasActiveAction() const;

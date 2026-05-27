@@ -69,6 +69,9 @@ public:
 	void HandleDeath();
 	virtual void HandleDeath_Implementation();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "ActionDemo|Character", meta = (DisplayName = "On Death"))
+	void K2_OnDeath();
+
 	UPROPERTY(BlueprintAssignable, Category = "ActionDemo|Character")
 	FADCharacterDeathSignature OnCharacterDeath;
 

@@ -141,8 +141,30 @@ void AADCharacterBase::HandleDeath_Implementation()
 
 	if (AbilitySystemComponent != nullptr)
 	{
-		AbilitySystemComponent->CancelAllAbilities();
 		AbilitySystemComponent->AddLooseGameplayTag(ADGameplayTags::State_Dead);
+		AbilitySystemComponent->CancelAllAbilities();
+		AbilitySystemComponent->RemoveLooseGameplayTag(ADGameplayTags::State_Hit_React);
+		AbilitySystemComponent->RemoveLooseGameplayTag(ADGameplayTags::Ability_Cancel_Active);
+	}
+
+	if (CombatComponent != nullptr)
+	{
+		CombatComponent->ResetCombatState();
+	}
+
+	if (AbilityQueueComponent != nullptr)
+	{
+		AbilityQueueComponent->ClearBufferedInput();
+	}
+
+	if (HitDetectionComponent != nullptr)
+	{
+		HitDetectionComponent->EndHitWindow();
+	}
+
+	if (TargetingComponent != nullptr)
+	{
+		TargetingComponent->ClearCurrentTarget();
 	}
 
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
@@ -156,5 +178,6 @@ void AADCharacterBase::HandleDeath_Implementation()
 		OwnerController->StopMovement();
 	}
 
+	K2_OnDeath();
 	OnCharacterDeath.Broadcast(this);
 }

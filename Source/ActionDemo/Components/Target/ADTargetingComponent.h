@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "ADTargetingComponent.generated.h"
 
+class AADCharacterBase;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FADTargetChangedSignature, AActor*, OldTarget, AActor*, NewTarget);
 
 /**
@@ -79,6 +81,10 @@ protected:
 	UFUNCTION()
 	void HandleCurrentTargetDestroyed(AActor* DestroyedActor);
 
+	UFUNCTION()
+	void HandleCurrentTargetDeath(AADCharacterBase* DeadCharacter);
+
+	bool IsAliveTarget(const AActor* Candidate) const;
 	void GatherTargetCandidates(TArray<AActor*>& OutCandidates) const;
 	bool IsValidTargetCandidate(const AActor* Candidate) const;
 	bool HasLineOfSightToTarget(const AActor* Candidate) const;

@@ -35,6 +35,12 @@ void AADEnemyAIController::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	if (IsControlledEnemyDead())
+	{
+		StopCombatLogicForDeath();
+		return;
+	}
+
 	ValidateCombatTarget();
 }
 
@@ -42,7 +48,13 @@ void AADEnemyAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	bCombatLogicStoppedForDeath = false;
 	ConfigureFromEnemyConfig();
+
+	if (AADEnemyCharacter* EnemyCharacter = GetControlledEnemy())
+	{
+		EnemyCharacter->OnCharacterDeath.AddUniqueDynamic(this, &AADEnemyAIController::HandleControlledEnemyDeath);
+	}
 
 	if (AIPerceptionComponent != nullptr)
 	{
@@ -68,6 +80,11 @@ void AADEnemyAIController::OnUnPossess()
 	if (AIPerceptionComponent != nullptr)
 	{
 		AIPerceptionComponent->OnTargetPerceptionUpdated.RemoveDynamic(this, &AADEnemyAIController::HandleTargetPerceptionUpdated);
+	}
+
+	if (AADEnemyCharacter* EnemyCharacter = GetControlledEnemy())
+	{
+		EnemyCharacter->OnCharacterDeath.RemoveDynamic(this, &AADEnemyAIController::HandleControlledEnemyDeath);
 	}
 
 	Super::OnUnPossess();
@@ -147,6 +164,10 @@ void AADEnemyAIController::SetCombatTarget(AActor* NewTarget)
 	if (IsValid(CombatTarget))
 	{
 		CombatTarget->OnDestroyed.RemoveDynamic(this, &AADEnemyAIController::HandleCombatTargetDestroyed);
+		if (AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(CombatTarget))
+		{
+			TargetCharacter->OnCharacterDeath.RemoveDynamic(this, &AADEnemyAIController::HandleCombatTargetDeath);
+		}
 	}
 
 	CombatTarget = NewTarget;
@@ -154,6 +175,10 @@ void AADEnemyAIController::SetCombatTarget(AActor* NewTarget)
 	if (IsValid(CombatTarget))
 	{
 		CombatTarget->OnDestroyed.AddUniqueDynamic(this, &AADEnemyAIController::HandleCombatTargetDestroyed);
+		if (AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(CombatTarget))
+		{
+			TargetCharacter->OnCharacterDeath.AddUniqueDynamic(this, &AADEnemyAIController::HandleCombatTargetDeath);
+		}
 		UE_LOG(LogTemp, Log, TEXT("[ActionDemo] Enemy AI target acquired: %s"), *CombatTarget->GetName());
 	}
 	else
@@ -191,9 +216,26 @@ void AADEnemyAIController::HandleCombatTargetDestroyed(AActor* DestroyedActor)
 	}
 }
 
+void AADEnemyAIController::HandleControlledEnemyDeath(AADCharacterBase* DeadCharacter)
+{
+	if (DeadCharacter == GetPawn())
+	{
+		StopCombatLogicForDeath();
+	}
+}
+
+void AADEnemyAIController::HandleCombatTargetDeath(AADCharacterBase* DeadCharacter)
+{
+	if (DeadCharacter == CombatTarget)
+	{
+		ClearCombatTarget();
+	}
+}
+
 bool AADEnemyAIController::IsValidCombatTarget(const AActor* Actor) const
 {
-	if (!IsValid(Actor) || Actor == GetPawn() || !Actor->IsA<AADCharacterBase>())
+	const AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(Actor);
+	if (!IsValid(Actor) || Actor == GetPawn() || TargetCharacter == nullptr || TargetCharacter->IsDead())
 	{
 		return false;
 	}
@@ -267,5 +309,27 @@ void AADEnemyAIController::ValidateCombatTarget()
 	if (!IsValidCombatTarget(CombatTarget) || GetTargetDistance() > LoseTargetDistance)
 	{
 		ClearCombatTarget();
+	}
+}
+
+void AADEnemyAIController::StopCombatLogicForDeath()
+{
+	if (bCombatLogicStoppedForDeath)
+	{
+		return;
+	}
+
+	bCombatLogicStoppedForDeath = true;
+	StopMovement();
+	ClearCombatTarget();
+
+	if (CombatStateTreeComponent != nullptr)
+	{
+		CombatStateTreeComponent->StopLogic(TEXT("Controlled enemy died"));
+	}
+
+	if (AIPerceptionComponent != nullptr)
+	{
+		AIPerceptionComponent->ForgetAll();
 	}
 }
