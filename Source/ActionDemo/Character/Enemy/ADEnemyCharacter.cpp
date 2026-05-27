@@ -2,7 +2,6 @@
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/ADGameplayAbility.h"
-#include "AbilitySystem/Abilities/ADGameplayAbility_ReceiveHit.h"
 #include "AI/ADEnemyAIController.h"
 #include "Character/Enemy/ADEnemyConfigData.h"
 #include "GameplayAbilitySpec.h"
@@ -11,7 +10,6 @@ AADEnemyCharacter::AADEnemyCharacter()
 {
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 	AIControllerClass = AADEnemyAIController::StaticClass();
-	DefaultHitReactionAbilityClass = UADGameplayAbility_ReceiveHit::StaticClass();
 }
 
 void AADEnemyCharacter::BeginPlay()
@@ -86,8 +84,6 @@ void AADEnemyCharacter::GrantStartupAbilitiesFromConfig()
 		FGameplayAbilitySpec AbilitySpec(AbilityClassObject, 1, INDEX_NONE, this);
 		GetADAbilitySystemComponent()->GiveAbility(AbilitySpec);
 	};
-
-	GrantAbility(DefaultHitReactionAbilityClass);
 
 	if (EnemyConfig != nullptr)
 	{

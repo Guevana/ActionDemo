@@ -48,10 +48,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Config")
 	TObjectPtr<UADEnemyConfigData> EnemyConfig;
 
-	/** 敌人默认受击 Ability；确保未配置资产时也能消费命中伤害事件。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Ability")
-	TSubclassOf<UADGameplayAbility> DefaultHitReactionAbilityClass;
-
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Enemy")
 	TObjectPtr<AADCharacterBase> LastHitInstigator = nullptr;
 

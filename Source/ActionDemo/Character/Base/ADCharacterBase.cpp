@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/ADAttributeSet.h"
+#include "Components/CapsuleComponent.h"
 #include "Core/Tags/ADGameplayTags.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
@@ -24,6 +25,9 @@ AADCharacterBase::AADCharacterBase()
 	WeaponManagerComponent = CreateDefaultSubobject<UADWeaponManagerComponent>(TEXT("WeaponManagerComponent"));
 
 	AttributeSet = CreateDefaultSubobject<UADAttributeSet>(TEXT("AttributeSet"));
+
+	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
+	GetMesh()->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 void AADCharacterBase::BeginPlay()

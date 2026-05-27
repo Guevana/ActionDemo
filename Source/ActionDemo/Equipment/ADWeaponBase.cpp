@@ -9,6 +9,7 @@ AADWeaponBase::AADWeaponBase()
 
 	WeaponMeshComponent = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WeaponMeshComponent"));
 	SetRootComponent(WeaponMeshComponent);
+	WeaponMeshComponent->SetCollisionResponseToChannel(ECC_Camera, ECR_Ignore);
 }
 
 USkeletalMeshComponent* AADWeaponBase::GetWeaponMeshComponent() const
