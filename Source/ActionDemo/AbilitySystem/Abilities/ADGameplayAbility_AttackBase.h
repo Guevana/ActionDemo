@@ -68,6 +68,37 @@ public:
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 
 protected:
+	/** Commit 成功后是否刷新锁定目标对应的 Motion Warping Target。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	bool bUpdateLockOnWarpTargetOnCommit = true;
+
+	/** 是否使用当前锁定目标作为攻击 Motion Warping Target。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	bool bUseLockedTargetForWarping = true;
+
+	/** 攻击 Motion Warping Target 名称，需要与 Montage Notify 中的 Warp Target Name 对齐。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	FName LockOnWarpTargetName = TEXT("AttackTarget");
+
+	/** 沿攻击者指向锁定目标方向的目标点偏移。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	float LockOnWarpTargetForwardOffset = 0.0f;
+
+	/** 沿攻击者面向锁定目标时右方向的目标点偏移。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	float LockOnWarpTargetRightOffset = 0.0f;
+
+	/** 世界 Up 方向目标点偏移。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
+	float LockOnWarpTargetUpOffset = 0.0f;
+
+	/** 尝试把当前锁定目标写入 Motion Warping Target；无有效目标时会清理同名 Target。 */
+	bool TryUpdateLockOnWarpTarget();
+
+	void ClearLockOnWarpTarget() const;
+
+	bool IsValidLockOnWarpTarget(const AActor* TargetActor) const;
+
 	/** 统一登记攻击开始时的战斗状态。 */
 	void NotifyAttackStarted();
 

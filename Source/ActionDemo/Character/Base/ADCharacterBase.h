@@ -12,6 +12,7 @@ class UADCombatComponent;
 class UADHitDetectionComponent;
 class UADTargetingComponent;
 class UADWeaponManagerComponent;
+class UMotionWarpingComponent;
 class AADWeaponBase;
 class AADCharacterBase;
 struct FOnAttributeChangeData;
@@ -49,6 +50,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
 	UADWeaponManagerComponent* GetWeaponManagerComponent() const;
+
+	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
+	UMotionWarpingComponent* GetMotionWarpingComponent() const;
 
 	UFUNCTION(BlueprintPure, Category = "ActionDemo|Character")
 	UADAttributeSet* GetADAttributeSet() const;
@@ -105,6 +109,10 @@ protected:
 	/** 武器管理组件。 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|Components")
 	TObjectPtr<UADWeaponManagerComponent> WeaponManagerComponent;
+
+	/** Motion Warping 目标管理组件。 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|Components")
+	TObjectPtr<UMotionWarpingComponent> MotionWarpingComponent;
 
 	/** 初始化 GAS ActorInfo。 */
 	UFUNCTION(BlueprintCallable, Category = "ActionDemo|Character")

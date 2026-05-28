@@ -4,6 +4,7 @@
 #include "Components/Combat/ADCombatComponent.h"
 #include "Components/Input/ADAbilityQueueComponent.h"
 #include "Components/StateTreeComponent.h"
+#include "Components/Target/ADLockOnControlComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 
 AADPlayerCharacter::AADPlayerCharacter()
@@ -22,6 +23,7 @@ AADPlayerCharacter::AADPlayerCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 
 	CombatStateTreeComponent = CreateDefaultSubobject<UStateTreeComponent>(TEXT("CombatStateTreeComponent"));
+	LockOnControlComponent = CreateDefaultSubobject<UADLockOnControlComponent>(TEXT("LockOnControlComponent"));
 }
 
 void AADPlayerCharacter::BeginPlay()

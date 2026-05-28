@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/ADGameplayAbility.h"
+#include "Character/Base/ADCharacterBase.h"
 #include "Character/Player/ADPlayerCharacter.h"
 #include "Components/Input/ADAbilityQueueComponent.h"
 #include "Components/StateTreeComponent.h"
@@ -56,6 +57,7 @@ void AADPlayerController::SetPawn(APawn* InPawn)
 
 	if (PreviousPawn != InPawn)
 	{
+		SetFreeMovementMode();
 		bStartupAbilitiesGranted = false;
 
 		if (InputConfig == nullptr)
@@ -74,6 +76,31 @@ void AADPlayerController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	bStartupAbilitiesGranted = false;
+}
+
+void AADPlayerController::SetFreeMovementMode()
+{
+	PlayerMovementMode = EADPlayerMovementMode::Free;
+	LockOnMovementModeParams = FADLockOnMovementModeParams();
+}
+
+void AADPlayerController::SetLockOnMovementMode(AActor* TargetActor, float MinTargetDistance, bool bAllowForwardMoveAtCloseRange)
+{
+	if (!IsValidLockOnMovementTarget(TargetActor))
+	{
+		SetFreeMovementMode();
+		return;
+	}
+
+	PlayerMovementMode = EADPlayerMovementMode::LockOn;
+	LockOnMovementModeParams.TargetActor = TargetActor;
+	LockOnMovementModeParams.MinTargetDistance = FMath::Max(0.0f, MinTargetDistance);
+	LockOnMovementModeParams.bAllowForwardMoveAtCloseRange = bAllowForwardMoveAtCloseRange;
+}
+
+EADPlayerMovementMode AADPlayerController::GetPlayerMovementMode() const
+{
+	return PlayerMovementMode;
 }
 
 void AADPlayerController::BindConfiguredInputActions()
@@ -183,6 +210,30 @@ void AADPlayerController::Ability_HandleMoveInput(
 		return;
 	}
 
+	switch (PlayerMovementMode)
+	{
+	case EADPlayerMovementMode::LockOn:
+		if (TryHandleLockOnMoveInput(PlayerCharacter, MovementInput))
+		{
+			return;
+		}
+		break;
+
+	case EADPlayerMovementMode::Free:
+	default:
+		break;
+	}
+
+	HandleFreeMoveInput(PlayerCharacter, MovementInput);
+}
+
+void AADPlayerController::HandleFreeMoveInput(AADPlayerCharacter* PlayerCharacter, const FVector2D& MovementInput)
+{
+	if (PlayerCharacter == nullptr)
+	{
+		return;
+	}
+
 	const FRotator CurrentControlRotation = GetControlRotation();
 	const FRotator YawRotation(0.0f, CurrentControlRotation.Yaw, 0.0f);
 	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -190,6 +241,51 @@ void AADPlayerController::Ability_HandleMoveInput(
 
 	PlayerCharacter->AddMovementInput(ForwardDirection, MovementInput.Y);
 	PlayerCharacter->AddMovementInput(RightDirection, MovementInput.X);
+}
+
+bool AADPlayerController::TryHandleLockOnMoveInput(AADPlayerCharacter* PlayerCharacter, const FVector2D& MovementInput)
+{
+	if (PlayerCharacter == nullptr)
+	{
+		return false;
+	}
+
+	AActor* TargetActor = LockOnMovementModeParams.TargetActor;
+	if (!IsValidLockOnMovementTarget(TargetActor))
+	{
+		SetFreeMovementMode();
+		return false;
+	}
+
+	FVector ToTarget = TargetActor->GetActorLocation() - PlayerCharacter->GetActorLocation();
+	ToTarget.Z = 0.0f;
+
+	if (ToTarget.IsNearlyZero())
+	{
+		return true;
+	}
+
+	const float TargetDistance = ToTarget.Size();
+	const FVector ForwardToTarget = ToTarget / TargetDistance;
+	const FVector RightAroundTarget = FVector::CrossProduct(FVector::UpVector, ForwardToTarget).GetSafeNormal();
+	const bool bIsForwardInput = MovementInput.Y > 0.0f;
+	const bool bCanMoveForward = !bIsForwardInput ||
+		LockOnMovementModeParams.bAllowForwardMoveAtCloseRange ||
+		TargetDistance > LockOnMovementModeParams.MinTargetDistance;
+
+	if (bCanMoveForward)
+	{
+		PlayerCharacter->AddMovementInput(ForwardToTarget, MovementInput.Y);
+	}
+
+	PlayerCharacter->AddMovementInput(RightAroundTarget, MovementInput.X);
+	return true;
+}
+
+bool AADPlayerController::IsValidLockOnMovementTarget(const AActor* TargetActor) const
+{
+	const AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(TargetActor);
+	return IsValid(TargetActor) && TargetActor != GetPawn() && TargetCharacter != nullptr && !TargetCharacter->IsDead();
 }
 
 void AADPlayerController::Ability_HandleLookInput(FInputActionValue ActionValue, 

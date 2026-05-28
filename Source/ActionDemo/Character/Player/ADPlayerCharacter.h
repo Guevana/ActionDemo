@@ -5,6 +5,7 @@
 #include "ADPlayerCharacter.generated.h"
 
 class UADInputConfigData;
+class UADLockOnControlComponent;
 class UCameraComponent;
 class UStateTreeComponent;
 class USpringArmComponent;
@@ -43,6 +44,10 @@ protected:
 	/** 玩家战斗 StateTree 组件。 */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|StateTree")
 	TObjectPtr<UStateTreeComponent> CombatStateTreeComponent;
+
+	/** 锁定状态下的玩家朝向控制。 */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ActionDemo|Target")
+	TObjectPtr<UADLockOnControlComponent> LockOnControlComponent;
 
 	/** 相机臂长，支持蓝图子类微调。 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Camera")

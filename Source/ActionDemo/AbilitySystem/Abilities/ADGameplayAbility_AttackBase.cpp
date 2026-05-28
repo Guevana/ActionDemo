@@ -6,8 +6,10 @@
 #include "AbilitySystem/Effects/ADGameplayEffect_Damage.h"
 #include "Character/Base/ADCharacterBase.h"
 #include "Components/Combat/ADCombatComponent.h"
+#include "Components/Target/ADTargetingComponent.h"
 #include "Core/Tags/ADGameplayTags.h"
 #include "GameFramework/Character.h"
+#include "MotionWarpingComponent.h"
 
 UADGameplayAbility_AttackBase::UADGameplayAbility_AttackBase()
 {
@@ -33,6 +35,7 @@ void UADGameplayAbility_AttackBase::ActivateAbility(
 		return;
 	}
 
+	TryUpdateLockOnWarpTarget();
 	NotifyAttackStarted();
 
 	const bool bMontageTaskStarted = bAutoPlayMontage && PlayAttackMontage();
@@ -64,6 +67,74 @@ void UADGameplayAbility_AttackBase::EndAbility(
 	AttackMontageTask = nullptr;
 
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+}
+
+bool UADGameplayAbility_AttackBase::TryUpdateLockOnWarpTarget()
+{
+	if (!bUpdateLockOnWarpTargetOnCommit || LockOnWarpTargetName.IsNone())
+	{
+		return false;
+	}
+
+	AADCharacterBase* Character = Cast<AADCharacterBase>(GetAvatarActorFromActorInfo());
+	if (Character == nullptr || Character->IsDead() || Character->GetMotionWarpingComponent() == nullptr)
+	{
+		return false;
+	}
+
+	if (!bUseLockedTargetForWarping || Character->GetTargetingComponent() == nullptr)
+	{
+		ClearLockOnWarpTarget();
+		return false;
+	}
+
+	AActor* CurrentTarget = Character->GetTargetingComponent()->CurrentTarget;
+	if (!IsValidLockOnWarpTarget(CurrentTarget))
+	{
+		ClearLockOnWarpTarget();
+		return false;
+	}
+
+	FVector ToTarget = CurrentTarget->GetActorLocation() - Character->GetActorLocation();
+	ToTarget.Z = 0.0f;
+	if (ToTarget.IsNearlyZero())
+	{
+		ClearLockOnWarpTarget();
+		return false;
+	}
+
+	const FVector ForwardToTarget = ToTarget.GetSafeNormal();
+	const FVector RightToTarget = FVector::CrossProduct(FVector::UpVector, ForwardToTarget).GetSafeNormal();
+	const FVector TargetLocation = CurrentTarget->GetActorLocation()
+		+ ForwardToTarget * LockOnWarpTargetForwardOffset
+		+ RightToTarget * LockOnWarpTargetRightOffset
+		+ FVector::UpVector * LockOnWarpTargetUpOffset;
+	const FRotator TargetRotation(0.0f, ForwardToTarget.Rotation().Yaw, 0.0f);
+
+	Character->GetMotionWarpingComponent()->AddOrUpdateWarpTargetFromTransform(
+		LockOnWarpTargetName,
+		FTransform(TargetRotation, TargetLocation));
+	return true;
+}
+
+void UADGameplayAbility_AttackBase::ClearLockOnWarpTarget() const
+{
+	const AADCharacterBase* Character = Cast<AADCharacterBase>(GetAvatarActorFromActorInfo());
+	if (Character != nullptr && Character->GetMotionWarpingComponent() != nullptr && !LockOnWarpTargetName.IsNone())
+	{
+		Character->GetMotionWarpingComponent()->RemoveWarpTarget(LockOnWarpTargetName);
+	}
+}
+
+bool UADGameplayAbility_AttackBase::IsValidLockOnWarpTarget(const AActor* TargetActor) const
+{
+	const AADCharacterBase* Character = Cast<AADCharacterBase>(GetAvatarActorFromActorInfo());
+	const AADCharacterBase* TargetCharacter = Cast<AADCharacterBase>(TargetActor);
+	return Character != nullptr &&
+		IsValid(TargetActor) &&
+		TargetActor != Character &&
+		TargetCharacter != nullptr &&
+		!TargetCharacter->IsDead();
 }
 
 void UADGameplayAbility_AttackBase::NotifyAttackStarted()

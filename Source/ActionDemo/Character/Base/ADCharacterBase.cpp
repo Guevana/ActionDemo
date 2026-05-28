@@ -12,6 +12,7 @@
 #include "Components/Equipment/ADWeaponManagerComponent.h"
 #include "Components/Input/ADAbilityQueueComponent.h"
 #include "Components/Target/ADTargetingComponent.h"
+#include "MotionWarpingComponent.h"
 
 AADCharacterBase::AADCharacterBase()
 {
@@ -23,6 +24,7 @@ AADCharacterBase::AADCharacterBase()
 	TargetingComponent = CreateDefaultSubobject<UADTargetingComponent>(TEXT("TargetingComponent"));
 	HitDetectionComponent = CreateDefaultSubobject<UADHitDetectionComponent>(TEXT("HitDetectionComponent"));
 	WeaponManagerComponent = CreateDefaultSubobject<UADWeaponManagerComponent>(TEXT("WeaponManagerComponent"));
+	MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("MotionWarpingComponent"));
 
 	AttributeSet = CreateDefaultSubobject<UADAttributeSet>(TEXT("AttributeSet"));
 
@@ -71,6 +73,11 @@ UADHitDetectionComponent* AADCharacterBase::GetHitDetectionComponent() const
 UADWeaponManagerComponent* AADCharacterBase::GetWeaponManagerComponent() const
 {
 	return WeaponManagerComponent;
+}
+
+UMotionWarpingComponent* AADCharacterBase::GetMotionWarpingComponent() const
+{
+	return MotionWarpingComponent;
 }
 
 UADAttributeSet* AADCharacterBase::GetADAttributeSet() const
