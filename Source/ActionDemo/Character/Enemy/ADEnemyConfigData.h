@@ -5,6 +5,7 @@
 #include "ADEnemyConfigData.generated.h"
 
 class UADGameplayAbility;
+class UGameplayEffect;
 
 /**
  * 敌人首版通用配置。
@@ -18,6 +19,9 @@ class ACTIONDEMO_API UADEnemyConfigData : public UDataAsset
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Ability")
 	TArray<TSubclassOf<UADGameplayAbility>> StartupAbilities;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	TArray<TSubclassOf<UGameplayEffect>> StartupAttributeEffects;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|AI", meta = (ClampMin = "0.0"))
 	float AttackRange = 220.0f;

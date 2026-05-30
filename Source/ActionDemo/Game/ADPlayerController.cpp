@@ -11,6 +11,7 @@
 #include "Input/Data/ADInputConfigData.h"
 #include "InputAction.h"
 #include "Math/RotationMatrix.h"
+#include "GameplayEffect.h"
 
 TArray<FString> AADPlayerController::GetRemoteFunctionNames()
 {
@@ -343,6 +344,8 @@ void AADPlayerController::GrantStartupAbilitiesFromConfig()
 		return;
 	}
 
+	ApplyStartupAttributeEffectsFromConfig(PlayerCharacter, ResolvedInputConfig);
+
 	for (const TSubclassOf<UADGameplayAbility>& AbilityClass : ResolvedInputConfig->StartupAbilities)
 	{
 		if (!AbilityClass)
@@ -355,6 +358,31 @@ void AADPlayerController::GrantStartupAbilitiesFromConfig()
 	}
 
 	bStartupAbilitiesGranted = true;
+}
+
+void AADPlayerController::ApplyStartupAttributeEffectsFromConfig(AADPlayerCharacter* PlayerCharacter, const UADInputConfigData* ResolvedInputConfig)
+{
+	if (PlayerCharacter == nullptr || ResolvedInputConfig == nullptr || PlayerCharacter->GetADAbilitySystemComponent() == nullptr)
+	{
+		return;
+	}
+
+	UADAbilitySystemComponent* ASC = PlayerCharacter->GetADAbilitySystemComponent();
+	for (const TSubclassOf<UGameplayEffect>& EffectClass : ResolvedInputConfig->StartupAttributeEffects)
+	{
+		if (EffectClass == nullptr)
+		{
+			continue;
+		}
+
+		FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1.0f, EffectContext);
+		if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
 }
 
 UADInputConfigData* AADPlayerController::GetResolvedInputConfig() const

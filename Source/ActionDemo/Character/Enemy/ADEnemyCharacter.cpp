@@ -5,6 +5,7 @@
 #include "AI/ADEnemyAIController.h"
 #include "Character/Enemy/ADEnemyConfigData.h"
 #include "GameplayAbilitySpec.h"
+#include "GameplayEffect.h"
 
 AADEnemyCharacter::AADEnemyCharacter()
 {
@@ -71,6 +72,8 @@ void AADEnemyCharacter::GrantStartupAbilitiesFromConfig()
 		return;
 	}
 
+	ApplyStartupAttributeEffectsFromConfig();
+
 	TSet<UClass*> GrantedAbilityClasses;
 	auto GrantAbility = [this, &GrantedAbilityClasses](const TSubclassOf<UADGameplayAbility>& AbilityClass)
 	{
@@ -94,4 +97,29 @@ void AADEnemyCharacter::GrantStartupAbilitiesFromConfig()
 	}
 
 	bStartupAbilitiesGranted = true;
+}
+
+void AADEnemyCharacter::ApplyStartupAttributeEffectsFromConfig()
+{
+	if (EnemyConfig == nullptr || GetADAbilitySystemComponent() == nullptr)
+	{
+		return;
+	}
+
+	UADAbilitySystemComponent* ASC = GetADAbilitySystemComponent();
+	for (const TSubclassOf<UGameplayEffect>& EffectClass : EnemyConfig->StartupAttributeEffects)
+	{
+		if (EffectClass == nullptr)
+		{
+			continue;
+		}
+
+		FGameplayEffectContextHandle EffectContext = ASC->MakeEffectContext();
+		EffectContext.AddSourceObject(this);
+		FGameplayEffectSpecHandle SpecHandle = ASC->MakeOutgoingSpec(EffectClass, 1.0f, EffectContext);
+		if (SpecHandle.IsValid() && SpecHandle.Data.IsValid())
+		{
+			ASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
+		}
+	}
 }

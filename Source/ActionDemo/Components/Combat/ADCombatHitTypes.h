@@ -40,8 +40,5 @@ struct FADCombatHitEventData
 	bool bHitLockedTarget = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
-	float DamageAmount = 0.0f;
-
-	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Hit")
 	TSubclassOf<UGameplayEffect> DamageEffectClass;
 };

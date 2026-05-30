@@ -15,7 +15,6 @@ namespace ADGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Target_Locked, "Event.Target.Locked");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Target_Unlocked, "Event.Target.Unlocked");
 	UE_DEFINE_GAMEPLAY_TAG(Status_Invincible, "Status.Invincible");
-	UE_DEFINE_GAMEPLAY_TAG(Data_Damage, "Data.Damage");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Attack_Light, "Input.Attack.Light");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Dodge, "Input.Dodge");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Target_Lock, "Input.Target.Lock");

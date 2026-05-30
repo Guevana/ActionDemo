@@ -6,7 +6,7 @@
 
 复杂链路维护：表格行只保留可查询摘要；当单条逻辑链需要承载多阶段流程、边界条件或验收步骤时，可在对应数据库下追加同 ID 小节，避免把所有细节塞进一行导致后续维护遗漏。
 
-文档状态：2026-05-28 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换 C++ 已编译通过；锁敌阶段 1、2A、2B、2C、3C 已验收。
+文档状态：2026-05-30 更新。已核对 `ActionDemo.uproject`、`ActionDemo.Build.cs`、`Source/ActionDemo` 核心源码、`Content/ActionDemo` 关键资产引用；伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已通过本机 UE 5.7 编译和编辑器场景验收；武器管理、生成、切换 C++ 已编译通过；`PLAN-Movement-01` 锁敌移动链路整体已验收；`PLAN-Attribute-01` 属性底座和 GE 伤害计算入口 C++ 首版已编译，待编辑器验证；`PLAN-Editor-01` 实时数据面板 Attribute/Tag/Ability 三栏 C++ 首版已编译，待编辑器场景验证。
 
 ## 查询索引
 * 项目边界：`Project Snapshot`
@@ -27,8 +27,8 @@
 | 主模块 | `Source/ActionDemo` Runtime |
 | 依赖 | GameplayAbilities、StateTree、GameplayStateTree、MotionWarping、Enhanced Input、AIModule |
 | 架构 | C++ 负责核心链路，蓝图负责配置和表现微调 |
-| 已有重点 | 轻攻击连段、取消窗口、输入缓冲、锁敌、锁定反馈、锁定朝向控制、锁定镜头、锁定移动输入、攻击锁定 Motion Warping Target C++ 首版、轻攻击一段 Motion Warping Notify 接入、命中事件、C++ 伤害/受击/死亡首版、敌人近战 AI 首版、武器生成/切换首版、武器来源命中窗口、受击硬直/反馈、死亡表现清理 |
-| 主要缺口 | 弹刀、极限闪避、空中连段、Motion Warping 多段 Montage 覆盖与手感调参 |
+| 已有重点 | 轻攻击连段、取消窗口、输入缓冲、锁敌、锁定反馈、锁定朝向控制、锁定镜头、锁定移动输入、攻击锁定 Motion Warping Target C++ 首版、轻攻击 Combo1-4 Motion Warping Notify 接入、命中事件、C++ 伤害/受击/死亡首版、敌人近战 AI 首版、武器生成/切换首版、武器来源命中窗口、受击硬直/反馈、死亡表现清理 |
+| 主要缺口 | 属性公式与数值成长、弹刀、极限闪避、空中连段 |
 
 ## Module Database
 | ID | 主要文件 | 查询事实 | 状态 |
@@ -36,20 +36,21 @@
 | MOD-Core-Tags | `Core/Tags/ADGameplayTags.*` | Native GameplayTags 唯一集中声明处 | 已实现 |
 | MOD-Character-Base | `Character/Base/ADCharacterBase.*` | 战斗实体基类；组装 ASC、AttributeSet、Combat、AbilityQueue、Targeting、HitDetection、WeaponManager、MotionWarping；`Get/SetEquippedWeapon` 仅委托武器管理组件；监听 Health 归零并进入死亡入口；死亡时清理 Ability、硬直/取消标签、Combat 状态、输入缓冲、命中窗口和锁定目标，并提供 `K2_OnDeath` 表现入口 | 已实现，死亡清理已验收 |
 | MOD-Character-Player | `Character/Player/ADPlayerCharacter.*` | 玩家 Pawn；相机、玩家 StateTree、取消窗口预输入重发 | 已实现 |
-| MOD-Character-Enemy | `Character/Enemy/ADEnemyCharacter.*` | 敌人 Pawn；敌人配置、启动 Ability 授予、默认受击 Ability 授予、受击入口、死亡广播 | 已实现 |
+| MOD-Character-Enemy | `Character/Enemy/ADEnemyCharacter.*` | 敌人 Pawn；敌人配置、启动属性 GE/Ability 授予、默认受击 Ability 授予、受击入口、死亡广播 | 已实现 |
 | MOD-AI-Enemy | `AI/ADEnemyAIController.*` | 感知、CombatTarget、敌人 StateTree、追击和范围判断；目标死亡时清空 CombatTarget，受控敌人死亡时停止移动、StateTree 和感知记忆 | 首版，死亡清理已验收 |
-| MOD-Input | `Input/Data/ADInputConfigData.h` | MappingContext、InputAction -> InputTag -> Controller 函数、StartupAbilities | 已实现 |
+| MOD-Input | `Input/Data/ADInputConfigData.h` | MappingContext、InputAction -> InputTag -> Controller 函数、StartupAbilities、StartupAttributeEffects | 已实现 |
 | MOD-PlayerController | `Game/ADPlayerController.*` | Enhanced Input 绑定、输入缓冲、ASC 激活、StateTree 事件、玩家 Ability 授予；维护玩家移动模式枚举和锁定移动参数，按 Free/LockOn 模式解释移动输入 | 已实现，锁定移动已验收 |
 | MOD-ASC | `AbilitySystem/ADAbilitySystemComponent.*` | 按 InputTag / AbilityClass 激活 Ability；攻击连段前取消旧攻击 Ability | 已实现 |
 | MOD-Ability-Base | `AbilitySystem/Abilities/ADGameplayAbility.*` | InputTag、AbilityTag、重复输入取消、蓝图扩展点 | 已实现 |
-| MOD-Ability-Attack | `AbilitySystem/Abilities/ADGameplayAbility_AttackBase.*` | 攻击登记、Montage 生命周期、默认时长兜底、旧 Montage 停止、命中伤害值与伤害 GE 配置；Commit 成功后可基于当前锁定目标写入/清理 Motion Warping Target；死亡/受击硬直状态下阻止攻击激活 | 已实现，Combo1 Motion Warping 已验收 |
+| MOD-Ability-Attack | `AbilitySystem/Abilities/ADGameplayAbility_AttackBase.*` | 攻击登记、Montage 生命周期、默认时长兜底、旧 Montage 停止、命中伤害值与伤害 GE 配置；Commit 成功后可基于当前锁定目标写入/清理 Motion Warping Target；死亡/受击硬直状态下阻止攻击激活 | 已实现，Combo1-4 Motion Warping 已验收 |
 | MOD-Ability-ReceiveHit | `AbilitySystem/Abilities/ADGameplayAbility_ReceiveHit.*` | 受击 Ability；由 `Event.Hit.Confirm` 触发，目标侧应用伤害 GE，忽略无敌/死亡目标；扣血成功且未死亡时进入 `State.Hit.React` 硬直，停止移动、可取消攻击、可播放受击 Montage，持续时间结束后恢复 | 已验收 |
-| MOD-Effect-Damage | `AbilitySystem/Effects/ADGameplayEffect_Damage.*` | 默认即时伤害 GE；通过 `SetByCaller(Data.Damage)` 修改 `Health` | 首版已验收 |
+| MOD-Effect-Damage | `AbilitySystem/Effects/ADGameplayEffect_Damage.*`、`AbilitySystem/Effects/ADDamageExecutionCalculation.*` | 默认即时伤害 GE；执行计算捕获来源 `AttackPower` 与目标 `Defense` 修改 `Health`，不再读取 `Data.Damage`/基础伤害回退 | C++ 首版已编译，待编辑器验证 |
 | MOD-Ability-TargetLock | `AbilitySystem/Abilities/ADGA_Target_Lock.*` | 锁敌 Ability；目标事实委托给 TargetingComponent | 已实现 |
 | MOD-Data-CombatAction | `AbilitySystem/Data/ADCombatActionData.h` | 派生输入、下一段 Ability、空中允许标记 | 骨架 |
 | MOD-Equipment-Weapon | `Equipment/ADWeaponBase.*` | 简单武器 Actor 基类；提供 Weapon Mesh 和持有者引用，供武器管理组件绑定角色 owner、供命中检测读取武器插槽 | 首版，C++ 已编译 |
 | MOD-Equipment-WeaponManager | `Components/Equipment/ADWeaponManagerComponent.*` | 角色武器事实源；按 `FADWeaponSpawnConfig` 生成武器实例、附着到角色 Mesh、维护武器实例列表和当前装备索引；切换时更新当前装备武器、显隐/碰撞状态、owner 绑定和装备变化广播；提供装备武器、武器 Mesh、按索引/前后切换查询函数 | 首版，C++ 已编译 |
-| MOD-Attributes | `AbilitySystem/Attributes/ADAttributeSet.*` | Health、MaxHealth、Stamina、MaxStamina；默认值、Clamp、GE 执行后修正 | 首版已验收 |
+| MOD-Attributes | `AbilitySystem/Attributes/ADAttributeSet.*` | Health、MaxHealth、Stamina、MaxStamina、AttackPower、Defense、Toughness、Energy、MaxEnergy；默认值、Clamp、GE 执行后修正 | 扩展 C++ 首版已编译，待编辑器验证 |
+| MOD-Editor-RuntimeData | `Source/ActionDemoEditor` | Editor-only C++ 模块；通过 `Window > ActionDemo > Runtime Data Panel` 打开可停靠面板，PIE/SIE 中下拉选择带 ASC 的 Actor；Attribute 页反射 AttributeSet 显示 Current/Base；Tag 页显示 ASC 当前拥有 Tag，重复计数以括号追加；Ability 页显示已授予 Ability，激活中 Ability 高亮；后续数据页通过页接口扩展 | C++ 首版已编译，待编辑器场景验证 |
 | MOD-Combat | `Components/Combat/ADCombatComponent.*` | 当前动作上下文、动作实例编号、取消窗口、命中确认入口、命中伤害上下文补全；死亡清理可重置当前/最近动作和取消窗口，死亡双方不再消费命中确认 | 已实现 |
 | MOD-InputQueue | `Components/Input/ADAbilityQueueComponent.*` | InputTag 缓存、0.35 秒默认有效期、消费输入 | 已实现 |
 | MOD-Targeting | `Components/Target/ADTargetingComponent.*` | 候选目标搜索、评分、切换、目标变更广播；当前目标死亡时自动解锁，候选搜索排除死亡角色 | 已实现 |
@@ -63,20 +64,20 @@
 ## Logic Chain Database
 | ID | 查询目标 | 当前链路 | 状态 |
 | --- | --- | --- | --- |
-| LC-Input-Player | 玩家输入如何进入战斗 | `AADPlayerController` 读取 `UADInputConfigData`；注入 MappingContext；绑定 `InputAction -> InputTag -> Ability_` 函数；轻攻击写入 `UADAbilityQueueComponent` 并发送 StateTree 事件；锁敌按 `Input.Target.Lock` 直接激活 ASC；`StartupAbilities` 只从 Controller 的 `InputConfig` 授予 | 已实现 |
+| LC-Input-Player | 玩家输入如何进入战斗 | `AADPlayerController` 读取 `UADInputConfigData`；注入 MappingContext；绑定 `InputAction -> InputTag -> Ability_` 函数；轻攻击写入 `UADAbilityQueueComponent` 并发送 StateTree 事件；锁敌按 `Input.Target.Lock` 直接激活 ASC；`StartupAttributeEffects/StartupAbilities` 只从 Controller 的 `InputConfig` 应用/授予 | 已实现 |
 | LC-Combo | 轻攻击连段如何跳转 | `Input.Attack.Light` 进入输入缓冲；StateTree 使用 `BufferedInputMatchesTag`、`CombatCurrentAction`、`LastCompletedActionMatches` 判断状态；`UADStateTreeTask_PlayCombatAbility` 消费输入、激活 Ability、记录 `TrackedActionTag/Serial`；旧动作被新实例替换时当前任务成功退出 | 已实现 |
 | LC-AttackAbility | 攻击 Ability 生命周期 | `UADGameplayAbility_AttackBase` Commit 后登记动作上下文；优先用 `UAbilityTask_PlayMontageAndWait` 驱动结束；Montage 完成正常结束，中断/取消则取消结束；无 Montage 时用 `DefaultAttackDuration` 兜底；激活新攻击前 ASC 取消旧攻击 Ability | 已实现 |
 | LC-ActionContext | 如何防旧回调污染当前动作 | `UADCombatComponent` 维护 `CurrentActionTag/Serial/AbilityClass/StartTime` 与 `LastCompletedActionTag/Serial`；动作开始生成递增 Serial；动作结束必须 `NotifyActionEndedByContext(ActionTag, Serial)` 校验，过期回调忽略 | 已实现 |
 | LC-CancelWindow | 取消窗口和预输入 | Montage `AD Cancel Window` 驱动 `Begin/EndCancelWindowFromNotify()`；组件用 `CancelWindowNotifyCount` 处理重叠窗口；同步 Loose Tag `Ability.Cancel.Active`；窗口开启时广播并让玩家角色重发仍有效的缓冲输入 | 已实现 |
 | LC-WeaponManagement | 武器如何生成和切换 | `UADWeaponManagerComponent` 在 BeginPlay 可按 `WeaponSpawnConfigs` 生成 `AADWeaponBase` 子类；生成参数包含 `WeaponClass`、`AttachSocketName`、`AttachRelativeTransform`，空插槽名回退到 `DefaultAttachSocketName`；生成武器注册到 `WeaponInstances`，默认隐藏未装备武器并关闭碰撞；`EquipWeaponByIndex/EquipNextWeapon/EquipPreviousWeapon` 只在管理实例列表内切换，切换后刷新当前装备索引、绑定 owner、附着角色 Mesh、广播 `OnEquippedWeaponChanged`；组件 EndPlay 可销毁自己生成的武器，不销毁手动引用的关卡武器 | C++ 已编译，资产待配置/验证 |
-| LC-HitDetection | 命中确认如何产生 | Montage `AD Hit Detection` 只给时机、插槽来源、双插槽和盒体截面配置；`UADHitDetectionComponent` 按 `SocketSource` 从 Montage 角色 Mesh 或 `UADWeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取 `StartSocketName/EndSocketName`，生成世界空间盒体 Sweep、去重并构造 `FADCombatHitEventData`；`UADCombatComponent::HandleHitConfirmed()` 补全当前攻击的 `DamageAmount/DamageEffectClass`、广播、发送 GAS GameplayEvent，并调用 Hit Receiver 接口；命中检测本身仍不直接扣血 | 已验收 |
-| LC-Damage-ReceiveHit | 命中如何转为扣血和死亡 | 攻击 Ability CDO 提供 `DamageAmount/DamageEffectClass`；`Event.Hit.Confirm` 使用 `EventMagnitude` 携带伤害、`OptionalObject` 携带 GE 类、`Data.Damage` SetByCaller 修改 `Health`；敌人默认授予 `UADGameplayAbility_ReceiveHit`；`UADAttributeSet` Clamp 生命/体力；`AADCharacterBase` 在 Health 归零时加 `State.Dead`、取消 Ability、清理硬直/取消标签、重置 Combat/输入/命中窗口/锁敌、停止移动并广播死亡 | 已验收 |
+| LC-HitDetection | 命中确认如何产生 | Montage `AD Hit Detection` 只给时机、插槽来源、双插槽和盒体截面配置；`UADHitDetectionComponent` 按 `SocketSource` 从 Montage 角色 Mesh 或 `UADWeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取 `StartSocketName/EndSocketName`，生成世界空间盒体 Sweep、去重并构造 `FADCombatHitEventData`；`UADCombatComponent::HandleHitConfirmed()` 补全当前攻击的 `DamageEffectClass`、广播、发送 GAS GameplayEvent，并调用 Hit Receiver 接口；命中检测本身仍不直接扣血 | 已验收 |
+| LC-Damage-ReceiveHit | 命中如何转为扣血和死亡 | 攻击 Ability CDO 提供 `DamageEffectClass`；`Event.Hit.Confirm` 使用 `OptionalObject` 携带 GE 类；`UADGameplayAbility_ReceiveHit` 优先使用来源 ASC 创建伤害 Spec；`UADDamageExecutionCalculation` 捕获来源 `AttackPower` 与目标 `Defense` 后修改 `Health`，不再读取 `DamageAmount/EventMagnitude/Data.Damage` 作为基础伤害；敌人默认授予受击 Ability；`UADAttributeSet` Clamp 属性；`AADCharacterBase` 在 Health 归零时加 `State.Dead` 并清理运行态 | 基础闭环已验收；属性伤害计算 C++ 首版待验证 |
 | LC-HitReact | 受击硬直如何阻断行动 | `UADGameplayAbility_ReceiveHit` 扣血成功后，若目标未死亡且 `HitReactDuration > 0`，添加 Loose Tag `State.Hit.React`，按配置取消当前攻击 Ability、停止 CharacterMovement 和 Controller MoveTo、可播放 `HitReactMontage`，由 `UAbilityTask_WaitDelay` 在持续时间后移除标签；受击 Ability 支持重复命中重触发；攻击 Ability 和 StateTree 攻击任务在死亡/硬直时不可启动；敌人追击任务在硬直期间持续 StopMovement 并保持 Running | 已验收 |
 | LC-TargetLock | 锁敌目标事实在哪里 | `UADGA_Target_Lock` 按 `Input.Target.Lock` 激活；`UADTargetingComponent::CurrentTarget` 是唯一事实；`AcquireBestTarget()` 按半径、视角、距离、方向和可选 LineTrace 评分；重复输入取消 Ability 并清空目标；阶段一锁定标记反馈已验收 | 已实现，反馈已验收 |
 | LC-LockOnFacing | 锁定后玩家如何面向目标 | `UADLockOnControlComponent` 挂在玩家角色上，监听 `OnTargetChanged`；锁定时关闭 `bOrientRotationToMovement` 和 `bUseControllerDesiredRotation`，Tick 中只按 Yaw 插值面向 `CurrentTarget`；解锁、目标无效或死亡时恢复进入锁定前的移动旋转配置 | 已验收 |
 | LC-LockOnCamera | 锁定后镜头如何跟随目标 | `UADLockOnControlComponent` 在锁定 Tick 中读取 Controller ViewPoint 和 `CurrentTarget` 焦点位置，按 Yaw/Pitch 分别插值更新 `ControlRotation`；焦点高度、Pitch Clamp、Yaw/Pitch 插值速度和最小焦点距离均可配置；解锁后停止辅助但不回弹镜头 | 已验收 |
 | LC-LockOnMovement | 锁定后移动输入如何解释 | `AADPlayerController` 维护 `EADPlayerMovementMode` 和 `FADLockOnMovementModeParams`；`UADLockOnControlComponent` 在锁定目标变化时调用 Controller 切换 Free/LockOn 模式并传入目标、最小距离和近距离前后移动开关；Free 模式沿 ControlRotation 移动，LockOn 模式 W/S 沿玩家到目标方向靠近/远离，A/D 沿目标切线横移 | 已验收 |
-| LC-LockOnWarpTarget | 攻击如何写入锁定目标 Motion Warping Target | `AADCharacterBase` 统一挂载 `UMotionWarpingComponent`；`UADGameplayAbility_AttackBase` 在 Commit 成功后读取 `UADTargetingComponent::CurrentTarget`，有效目标写入 `AttackTarget` Transform，无锁定/目标死亡/目标无效时移除同名 Warp Target；Warp Transform 位置来自目标位置加配置偏移，旋转只保留攻击者指向目标的 Yaw；`Anim_ARPGSamurai_Attack_Combo1_Montage` 已新增 `MotionWarping` Notify State，窗口 `0.05s-0.37s`，SkewWarp 目标名 `AttackTarget` | Combo1 已验收 |
+| LC-LockOnWarpTarget | 攻击如何写入锁定目标 Motion Warping Target | `AADCharacterBase` 统一挂载 `UMotionWarpingComponent`；`UADGameplayAbility_AttackBase` 在 Commit 成功后读取 `UADTargetingComponent::CurrentTarget`，有效目标写入 `AttackTarget` Transform，无锁定/目标死亡/目标无效时移除同名 Warp Target；Warp Transform 位置来自目标位置加配置偏移，旋转只保留攻击者指向目标的 Yaw；`Anim_ARPGSamurai_Attack_Combo1_Montage`、`Anim_ARPGSamurai_Attack_Combo2_Montage`、`Anim_ARPGSamurai_Attack_Combo3_Montage`、`Anim_ARPGSamurai_Attack_Combo4_Montage` 均已接入 `MotionWarping` Notify State 并消费 `AttackTarget`，具体窗口以各 Montage 资产配置为准 | Combo1-4 已验收 |
 | LC-EnemyAI | 敌人首版近战 AI | `AADEnemyAIController` 持有感知、`CombatTarget` 和 StateTree；同步目标到 Pawn 的 TargetingComponent；`UADStateTreeEvaluator_EnemyCombatSnapshot` 输出目标/距离/攻击范围；`UADStateTreeTask_MoveToEnemyTarget` 追击到攻击范围；`AADEnemyCharacter` 授予启动 Ability 并接收命中 | 首版 |
 
 ## GameplayTag Database
@@ -95,7 +96,6 @@
 | `Event.Target.Locked` | `Event_Target_Locked` | 目标锁定事件 |
 | `Event.Target.Unlocked` | `Event_Target_Unlocked` | 目标解锁事件 |
 | `Status.Invincible` | `Status_Invincible` | 无敌帧 |
-| `Data.Damage` | `Data_Damage` | 伤害 GE SetByCaller 数据标签 |
 | `Input.Attack.Light` | `Input_Attack_Light` | 轻攻击输入 |
 | `Input.Dodge` | `Input_Dodge` | 闪避输入 |
 | `Input.Target.Lock` | `Input_Target_Lock` | 锁敌输入 |
@@ -105,29 +105,31 @@
 ## Asset / Editor Database
 | 配置 | 当前约定 | 状态 |
 | --- | --- | --- |
-| 玩家输入 | `UADInputConfigData` 配置 MappingContexts、AbilityInputBindings、StartupAbilities | 资产侧配置 |
+| 玩家输入 | `UADInputConfigData` 配置 MappingContexts、AbilityInputBindings、StartupAbilities、StartupAttributeEffects；启动属性 GE 由 PlayerController 在 Authority 上应用到玩家自身 ASC | 资产侧配置，C++ 已编译 |
 | 输入函数 | `FunctionNameToCall` 指向 `AADPlayerController` 的 `Ability_` 前缀函数 | 已实现 |
 | 验证入口 | `DevelopMap_1` 引用 `BP_Gamemode_dev`；`BP_Gamemode_dev` 指向 `BP_PlayerCharacter` 和 `BP_PlayerController`，用于资产侧输入/Ability 验证 | 资产侧配置 |
 | 轻攻击 Ability | 实际资产为 `GA_Player_LightAttack_1`、`GA_Player_LightAttack_2`、`GA_Player_LightAttack_3`；`DA_PlayerConfig` 和 `ST_PlayerCombat` 已引用 | 资产存在，编辑器流程待验证 |
-| 攻击参数 | `AttackMontage`、`DefaultAttackDuration`、`bAutoPlayMontage`、`bAutoEndAbility`、`CancelMontageBlendOutTime`、`ActionData`、`DamageAmount`、`DamageEffectClass` | 已实现 |
+| 攻击参数 | `AttackMontage`、`DefaultAttackDuration`、`bAutoPlayMontage`、`bAutoEndAbility`、`CancelMontageBlendOutTime`、`ActionData`、`DamageEffectClass` | 已实现 |
 | 受击 Ability | `UADGameplayAbility_ReceiveHit` 默认监听 `Event.Hit.Confirm`；敌人 `DefaultHitReactionAbilityClass` 默认指向该 C++ Ability，也可在蓝图子类替换；硬直参数包含 `HitReactDuration`、`HitReactMontage`、`HitReactMontageRate`、`bCancelActiveAttackOnHit`、`bStopMovementOnHit` | 伤害扣血与受击硬直/反馈均已验收 |
-| 默认伤害 GE | `UADGameplayEffect_Damage` 为 instant GE；要求调用方设置 `Data.Damage`，当前受击 Ability 传负值扣血 | 首版已验收 |
+| 默认伤害 GE | `UADGameplayEffect_Damage` 为 instant GE；执行计算使用 `Source.AttackPower - Target.Defense`，来源攻击力大于 0 时最终至少 1 点伤害，不再需要 `Data.Damage` SetByCaller | C++ 首版已编译，待编辑器验证 |
 | 武器生成/切换 | 角色 `WeaponManagerComponent` 配置 `WeaponSpawnConfigs`；每项指定 `AADWeaponBase` 蓝图类、附着 Socket 和相对变换；`InitialWeaponIndex` 指定默认装备；`DefaultAttachSocketName` 用作空 Socket 回退；未装备武器默认隐藏且关闭碰撞；切换函数由蓝图、输入或 Ability 调用 | C++ 已编译，资产待配置/验证 |
 | 取消窗口 | Montage 添加 `AD Cancel Window` | 资产侧配置 |
 | 命中窗口 | Montage 添加 `AD Hit Detection`，配置 `SocketSource`、`StartSocketName`、`EndSocketName`、`SocketAxisPadding`、`CrossSectionHalfExtent`、TraceChannel、HitEventTag、Debug；`SocketSource=CharacterMesh` 时从 Montage 角色 Mesh 读取插槽，`SocketSource=EquippedWeapon` 时从角色 `WeaponManagerComponent` 当前装备武器的 Weapon Mesh 读取插槽；推荐插槽名 `Hit_Start` / `Hit_End`，实际名称以每个 Notify 配置为准；插槽缺失、武器未设置或两插槽距离过短时本窗口跳过 | 角色来源与武器来源均已验收 |
-| Motion Warping 窗口 | `Anim_ARPGSamurai_Attack_Combo1_Montage` 新增 `MotionWarping` Notify State，`RootMotionModifier_SkewWarp` 使用 `AttackTarget`；当前窗口为 `0.05s` 起、`0.32s` 时长，覆盖 Combo1 命中前后用于首版锁定攻击贴近/转向验证 | Combo1 已验收 |
-| 敌人配置 | `UADEnemyConfigData` 配置 StartupAbilities、AttackRange、LoseTargetDistance、SightRadius、LoseSightRadius、PeripheralVisionAngleDegrees | 首版 |
+| Motion Warping 窗口 | `Anim_ARPGSamurai_Attack_Combo1_Montage`、`Anim_ARPGSamurai_Attack_Combo2_Montage`、`Anim_ARPGSamurai_Attack_Combo3_Montage`、`Anim_ARPGSamurai_Attack_Combo4_Montage` 均配置 `MotionWarping` Notify State，`RootMotionModifier_SkewWarp` 使用 `AttackTarget`；Combo1 当前窗口为 `0.05s` 起、`0.32s` 时长，Combo2/3/4 窗口以资产配置为准 | Combo1-4 已验收 |
+| 敌人配置 | `UADEnemyConfigData` 配置 StartupAbilities、StartupAttributeEffects、AttackRange、LoseTargetDistance、SightRadius、LoseSightRadius、PeripheralVisionAngleDegrees；启动属性 GE 由 EnemyCharacter 在 Authority 上应用到自身 ASC | 首版，C++ 已编译 |
 | 连段数据 | `UADCombatActionData` 可描述派生输入和下一段 Ability | 尚未成为主数据源 |
-| 编译验收 | `ActionDemoEditor Win64 Development` 优先使用 `Project Snapshot` 记录的 UE 5.7 路径编译；若路径不存在，先探测本机 UE 5.7 安装或询问。伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已完成编辑器场景验收；武器管理、生成、切换与武器插槽来源已通过 UHT/C++ 编译；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-27 已通过 |
+| 实时数据面板 | `Source/ActionDemoEditor` 注册 `Runtime Data Panel`；只扫描 PIE/SIE 世界中实现 `IAbilitySystemInterface` 且有 ASC 的 Actor；Attribute 页反射 `ASC->GetSpawnedAttributes()` 中所有 `FGameplayAttributeData`；Tag 页使用 `GetOwnedGameplayTags/GetTagCount`；Ability 页使用 `GetActivatableAbilities/Spec.IsActive`；10Hz 刷新，搜索过滤 | C++ 首版已编译，待编辑器场景验证 |
+| 编译验收 | `ActionDemoEditor Win64 Development` 优先使用 `Project Snapshot` 记录的 UE 5.7 路径编译；若路径不存在，先探测本机 UE 5.7 安装或询问。伤害/受击/死亡链路、角色插槽驱动命中窗口、武器插槽来源命中窗口、受击硬直/反馈链路、死亡表现清理链路已完成编辑器场景验收；`PLAN-Attribute-01` 属性底座、GE 伤害计算入口和 InputConfig/EnemyConfig 属性 GE 配置入口已通过 UHT/C++ 编译；`PLAN-Editor-01` 实时数据面板 Attribute/Tag/Ability 三栏已通过 C++ 编译；UBT 提示 VS 2022 编译器非首选版本但未阻断 | 2026-05-30 已通过 |
 
 ## Planning Database
 | ID | 规划主题 | 已确认方向 | 关联记录 |
 | --- | --- | --- | --- |
-| PLAN-Combat-01 | 真实命中到受击链路 | 基础闭环已验收：攻击 Ability 携带 `DamageEffectClass/DamageAmount`，`UADCombatComponent::HandleHitConfirmed` 经 GameplayEvent 投递，目标侧 `UADGameplayAbility_ReceiveHit` 通过 GameplayEffect 修改 `Health`，Health 归零进入死亡入口，未死亡则进入 `State.Hit.React` 硬直并暂停行动。后续收尾进入 `PLAN-Combat-02` |  `LC-HitDetection`、`LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Combat`、`MOD-Attributes` |
+| PLAN-Combat-01 | 真实命中到受击链路 | 基础闭环已验收：攻击 Ability 携带 `DamageEffectClass`，`UADCombatComponent::HandleHitConfirmed` 经 GameplayEvent 投递，目标侧 `UADGameplayAbility_ReceiveHit` 通过 GameplayEffect 修改 `Health`，Health 归零进入死亡入口，未死亡则进入 `State.Hit.React` 硬直并暂停行动。后续收尾进入 `PLAN-Combat-02` |  `LC-HitDetection`、`LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Combat`、`MOD-Attributes` |
 | PLAN-Combat-02 | 死亡表现清理 | 已验收：死亡时停止移动、攻击、硬直和 AI 行为；清理或禁用命中窗口、锁敌目标、感知/追击状态；提供 `K2_OnDeath` 蓝图表现入口；敌人死亡后不再移动/攻击/进入硬直循环，玩家锁敌和命中链路不保留悬挂目标 | `LC-Damage-ReceiveHit`、`LC-HitReact`、`MOD-Character-Base`、`MOD-StateTree-Enemy`、`MOD-Targeting` |
 | PLAN-Combo-01 | 数据驱动连段 | 推进 `UADCombatActionData` 成为连段派生主数据源；先扩展 `FADCombatActionTransition` 增加可选条件（取消窗口/最近完成动作匹配）；攻击 Ability 在结束/取消窗口阶段查表得出候选 `NextAbilityClass`，StateTree 仅判定输入与全局阻塞 |  `LC-Combo`、`MOD-Data-CombatAction` |
-| PLAN-Movement-01 | 锁敌移动链路 | 分阶段推进：阶段一锁定反馈已验收；阶段二 2A 锁定朝向控制已验收；阶段二 2B 锁定镜头已验收；阶段二 2C 锁定移动输入已验收；阶段三 3AB 攻击锁定 Motion Warping Target C++ 首版已落地；阶段三 3C 轻攻击一段 Combo1 Motion Warping 已通过编辑器验收。下一步可扩展到 Combo2/3/4 或进入锁定攻击参数微调 |  `LC-TargetLock`、`LC-LockOnFacing`、`LC-LockOnCamera`、`LC-LockOnMovement`、`LC-LockOnWarpTarget`、`MOD-Targeting`、`MOD-LockOnControl`、`MOD-PlayerController`、`MOD-Ability-Attack` |
-| PLAN-Attribute-01 | 属性集与 GE 流水扩展 | 基于现有 `UADAttributeSet` 扩展攻击力、防御、韧性（HitStun 抗性）、能量等属性；建立伤害计算 `UGameplayEffectExecutionCalculation`；将 `Event.Hit.Confirm` 携带的 `SourceActionTag` 映射到伤害系数表 |  `MOD-Attributes`、`PLAN-Combat-01` |
+| PLAN-Movement-01 | 锁敌移动链路 | 已验收：阶段一锁定反馈、阶段二 2A 锁定朝向控制、2B 锁定镜头、2C 锁定移动输入、阶段三 3AB 攻击锁定 Motion Warping Target、3C Combo1 Motion Warping、3D Combo2/3/4 Motion Warping 均已完成并通过编辑器场景验收。后续锁定攻击只保留资产参数微调，不再阻塞本计划 |  `LC-TargetLock`、`LC-LockOnFacing`、`LC-LockOnCamera`、`LC-LockOnMovement`、`LC-LockOnWarpTarget`、`MOD-Targeting`、`MOD-LockOnControl`、`MOD-PlayerController`、`MOD-Ability-Attack` |
+| PLAN-Attribute-01 | 属性集与 GE 流水扩展 | 属性底座、GE 伤害计算入口和角色初始属性 GE 配置入口 C++ 首版已编译：新增 AttackPower/Defense/Toughness/Energy/MaxEnergy，默认伤害 GE 改为完全由 `AttackPower` 接管并扣除目标 `Defense`；玩家从 `InputConfig`、敌人从 `EnemyConfig` 应用 `StartupAttributeEffects`；动作系数数据入口和编辑器验证未完成 |  `MOD-Attributes`、`MOD-Effect-Damage`、`MOD-Input`、`MOD-Character-Enemy`、`MOD-Ability-ReceiveHit`、`LC-Damage-ReceiveHit`、`PLAN-Combat-01` |
+| PLAN-Editor-01 | 实时数据面板 | 新增 Editor-only `ActionDemoEditor` 模块和可停靠 Runtime Data Panel；首版支持 PIE/SIE Actor 下拉、数据类型导航、Attribute/Tag/Ability 页、GAS AttributeSet 通用反射、Owned Tag 计数显示、Ability 激活高亮、搜索过滤、滚动和 10Hz 刷新；后续 Combat/Targeting 等页通过页接口扩展 | `MOD-Editor-RuntimeData`、`MOD-Attributes`、`PLAN-Attribute-01` |
 | PLAN-Defense-01 | 弹刀与极限闪避 | 新增 `Input.Parry`、`Ability.Parry`、`State.Parry.Window`、`State.Dodge.Perfect` 标签；闪避 Ability 在前若干帧加 `Status.Invincible`；弹刀 Ability 在窗口期内捕获 `Event.Hit.Confirm` 并触发反制；与 `LC-HitDetection` 协作，命中前若目标处于弹刀窗则改走反制分支 |  `LC-HitDetection`、`MOD-Combat` |
 | PLAN-Air-01 | 空中状态与空中连段 | 利用现有 `State.Action.Airborne` 与 `UADCombatActionData::bAllowInAir`；玩家落地/起跳维护标签；StateTree 增加空中分支；空中攻击 Ability 通过自定义 RootMotion/Launch 锁定高度，落地或目标距离断裂时结束 |  `MOD-Data-CombatAction`、`MOD-Character-Player` |
 | PLAN-Verify-01 | 阶段验收与编辑器验证 | 每个 PLAN 落地时执行：① 使用 `E:\UE_5.7\Engine\Build\BatchFiles\Build.bat` 执行 `ActionDemoEditor Win64 Development` 编译；若编辑器占用 RiderLink，可临时追加 `-NoHotReloadFromIDE -DisablePlugin=RiderLink` 验证项目模块；② 编辑器场景跑通对应 Logic Chain（命中扣血/弹刀反制/空中三段等）；③ Wiki 把对应规划状态同步到模块/Logic Chain 条目；④ 在 `Decision Ledger` 留决策行 |  `Planning Database`、`Decision Ledger` |
@@ -166,6 +168,13 @@
 | 2026-05-28 | 攻击锁定 Motion Warping Target 首版落地：角色基类统一挂载 MotionWarpingComponent，攻击 Ability Commit 后刷新或清理 `AttackTarget` | `PLAN-Movement-01`、`LC-LockOnWarpTarget`、`MOD-Character-Base`、`MOD-Ability-Attack` |
 | 2026-05-28 | 轻攻击一段 Combo1 Montage 接入 Motion Warping Notify：窗口 `0.05s-0.37s`，SkewWarp 消费 `AttackTarget` | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
 | 2026-05-28 | 轻攻击一段 Combo1 Motion Warping 已通过编辑器场景验收 | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
+| 2026-05-29 | 轻攻击 Combo2/3/4 Montage 已接入 Motion Warping Notify 并通过编辑器场景验收，锁定攻击 Motion Warping 覆盖 Combo1-4 | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
+| 2026-05-29 | `PLAN-Movement-01` 标记为整体已验收；下一阶段启动 `PLAN-Attribute-01`，优先沿现有受击 Ability 和 Damage GE 流水扩展属性与伤害计算 | `PLAN-Movement-01`、`PLAN-Attribute-01`、`LC-Damage-ReceiveHit` |
+| 2026-05-30 | `PLAN-Attribute-01` 先落属性底座和 GE 伤害计算入口：伤害公式继续经受击 Ability 与 Damage GE 进入 AttributeSet，避免回流到命中检测、Combat 组件或角色类 | `PLAN-Attribute-01`、`MOD-Attributes`、`MOD-Effect-Damage`、`LC-Damage-ReceiveHit` |
+| 2026-05-30 | 玩家 `InputConfig` 与敌人 `EnemyConfig` 增加 `StartupAttributeEffects`，启动时在 Authority 上应用到自身 ASC，作为角色属性数值配置入口 | `PLAN-Attribute-01`、`MOD-Input`、`MOD-Character-Enemy`、`MOD-Attributes` |
+| 2026-05-30 | 默认伤害 GE 移除 `Data.Damage` 基础伤害回退，伤害由来源 `AttackPower` 扣除目标 `Defense` 后产生 | `PLAN-Attribute-01`、`MOD-Effect-Damage`、`LC-Damage-ReceiveHit` |
+| 2026-05-30 | 实时数据调试工具收口为独立 Editor-only C++ 模块，避免编辑器 UI 依赖进入 Runtime；Attribute 页使用 GAS AttributeSet 通用反射而非硬编码项目属性 | `PLAN-Editor-01`、`MOD-Editor-RuntimeData`、`MOD-Attributes` |
+| 2026-05-30 | Runtime Data Panel 扩展 Tag 与 Ability 页：Tag 显示当前拥有数量，Ability 按 `FGameplayAbilitySpec::IsActive()` 高亮激活中条目 | `PLAN-Editor-01`、`MOD-Editor-RuntimeData` |
 
 ## Change Ledger
 | 日期 | 摘要 | 详情 |
@@ -197,6 +206,13 @@
 | 2026-05-28 | 落地攻击锁定 Motion Warping Target C++ 首版 | `PLAN-Movement-01`、`LC-LockOnWarpTarget`、`MOD-Character-Base`、`MOD-Ability-Attack` |
 | 2026-05-28 | 轻攻击一段 Combo1 Montage 接入 Motion Warping Notify | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
 | 2026-05-28 | 轻攻击一段 Combo1 Motion Warping 编辑器验收通过 | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
+| 2026-05-29 | 轻攻击 Combo2/3/4 Motion Warping 编辑器验收通过 | `PLAN-Movement-01`、`LC-LockOnWarpTarget` |
+| 2026-05-29 | `PLAN-Movement-01` 标记整体验收并启动 `PLAN-Attribute-01` 阶段规划 | `Planning Database`、`MOD-Attributes` |
+| 2026-05-30 | 落地属性底座和 GE 伤害执行计算 C++ 首版 | `MOD-Attributes`、`MOD-Effect-Damage`、`LC-Damage-ReceiveHit` |
+| 2026-05-30 | 新增 InputConfig/EnemyConfig 启动属性 GE 配置入口 | `PLAN-Attribute-01`、`MOD-Input`、`MOD-Character-Enemy` |
+| 2026-05-30 | 移除默认伤害 GE 的 Data.Damage 基础伤害回退 | `MOD-Effect-Damage`、`LC-Damage-ReceiveHit` |
+| 2026-05-30 | 落地实时数据面板 Editor 模块 C++ 首版 | `MOD-Editor-RuntimeData`、`PLAN-Editor-01` |
+| 2026-05-30 | 实时数据面板新增 Tag 和 Ability 页 | `MOD-Editor-RuntimeData`、`PLAN-Editor-01` |
 | 2026-04-28 | 动作实例跟踪与 Combat 动作上下文 | `LC-Combo`、`LC-ActionContext` |
 | 2026-04-27 | 攻击 Ability 生命周期统一化 | `LC-AttackAbility` |
 | 2026-04-26 | 连段旧 Ability 主动取消和旧回调保护 | `LC-AttackAbility`、`LC-ActionContext` |

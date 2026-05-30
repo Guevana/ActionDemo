@@ -139,13 +139,12 @@ void UADCombatComponent::HandleHitConfirmed(const FADCombatHitEventData& HitData
 	UE_LOG(
 		LogTemp,
 		Log,
-		TEXT("[ActionDemo] Combat hit confirmed. Source=%s Target=%s Action=%s Event=%s LockedTarget=%d Damage=%.2f"),
+		TEXT("[ActionDemo] Combat hit confirmed. Source=%s Target=%s Action=%s Event=%s LockedTarget=%d"),
 		ResolvedHitData.InstigatorCharacter != nullptr ? *ResolvedHitData.InstigatorCharacter->GetName() : TEXT("None"),
 		ResolvedHitData.TargetCharacter != nullptr ? *ResolvedHitData.TargetCharacter->GetName() : TEXT("None"),
 		*ResolvedHitData.SourceActionTag.ToString(),
 		*ResolvedHitData.HitEventTag.ToString(),
-		ResolvedHitData.bHitLockedTarget,
-		ResolvedHitData.DamageAmount);
+		ResolvedHitData.bHitLockedTarget);
 
 	OnCombatHitConfirmed.Broadcast(ResolvedHitData);
 	SendHitGameplayEvent(ResolvedHitData);
@@ -164,7 +163,6 @@ void UADCombatComponent::FillHitDataFromCurrentAction(FADCombatHitEventData& Hit
 		return;
 	}
 
-	HitData.DamageAmount = AttackCDO->DamageAmount;
 	HitData.DamageEffectClass = AttackCDO->DamageEffectClass;
 }
 
@@ -206,7 +204,6 @@ void UADCombatComponent::SendHitGameplayEvent(const FADCombatHitEventData& HitDa
 	EventData.EventTag = HitData.HitEventTag;
 	EventData.Instigator = HitData.InstigatorCharacter;
 	EventData.Target = HitData.TargetCharacter;
-	EventData.EventMagnitude = HitData.DamageAmount;
 	EventData.OptionalObject = HitData.DamageEffectClass.Get();
 	if (HitData.SourceActionTag.IsValid())
 	{

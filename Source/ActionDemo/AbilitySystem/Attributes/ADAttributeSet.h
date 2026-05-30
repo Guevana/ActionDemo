@@ -13,7 +13,6 @@
 
 /**
  * 基础属性集。
- * 当前先提供生命与体力骨架，后续可继续扩展攻击、韧性、能量等属性。
  */
 UCLASS()
 class ACTIONDEMO_API UADAttributeSet : public UAttributeSet
@@ -45,4 +44,29 @@ public:
 	FGameplayAttributeData MaxStamina;
 
 	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, MaxStamina)
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	FGameplayAttributeData AttackPower;
+
+	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, AttackPower)
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	FGameplayAttributeData Defense;
+
+	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, Defense)
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	FGameplayAttributeData Toughness;
+
+	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, Toughness)
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	FGameplayAttributeData Energy;
+
+	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, Energy)
+
+	UPROPERTY(BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	FGameplayAttributeData MaxEnergy;
+
+	AD_ATTRIBUTE_ACCESSORS(UADAttributeSet, MaxEnergy)
 };

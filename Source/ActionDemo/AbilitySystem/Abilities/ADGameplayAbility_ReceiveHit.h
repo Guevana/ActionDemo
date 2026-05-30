@@ -36,9 +36,6 @@ public:
 		bool bWasCancelled) override;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Hit", meta = (ClampMin = "0.0"))
-	float DefaultDamageAmount = 10.0f;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Hit")
 	TSubclassOf<UGameplayEffect> DefaultDamageEffectClass;
 
@@ -65,8 +62,7 @@ protected:
 		const FGameplayAbilitySpecHandle Handle,
 		const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo,
-		const FGameplayEventData* TriggerEventData,
-		float DamageAmount) const;
+		const FGameplayEventData* TriggerEventData) const;
 
 	bool ShouldEnterHitReact(const FGameplayAbilityActorInfo* ActorInfo) const;
 
@@ -86,8 +82,6 @@ protected:
 	void HandleHitReactMontageCancelled();
 
 	TSubclassOf<UGameplayEffect> ResolveDamageEffectClass(const FGameplayEventData* TriggerEventData) const;
-
-	float ResolveDamageAmount(const FGameplayEventData* TriggerEventData) const;
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "ActionDemo|Hit", meta = (DisplayName = "On Hit Received"))
 	void K2_OnHitReceived(const FGameplayEventData& TriggerEventData, float DamageAmount);

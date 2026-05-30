@@ -7,6 +7,7 @@
 #include "ADInputConfigData.generated.h"
 
 class UADGameplayAbility;
+class UGameplayEffect;
 class UInputAction;
 class UInputMappingContext;
 class AADPlayerController;
@@ -69,5 +70,9 @@ public:
 	/** 角色启动时授予的 Ability 列表。 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Ability")
 	TArray<TSubclassOf<UADGameplayAbility>> StartupAbilities;
+
+	/** 角色启动时应用到自身的属性 GameplayEffect。 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attributes")
+	TArray<TSubclassOf<UGameplayEffect>> StartupAttributeEffects;
 	
 };

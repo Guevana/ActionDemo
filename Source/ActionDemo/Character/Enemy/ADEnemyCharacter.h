@@ -44,6 +44,7 @@ protected:
 	virtual void PossessedBy(AController* NewController) override;
 
 	void GrantStartupAbilitiesFromConfig();
+	void ApplyStartupAttributeEffectsFromConfig();
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Config")
 	TObjectPtr<UADEnemyConfigData> EnemyConfig;

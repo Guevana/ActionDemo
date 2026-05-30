@@ -79,6 +79,7 @@ protected:
 	void BindConfiguredInputActions();
 	void InitializeConfiguredInputMappings();
 	void GrantStartupAbilitiesFromConfig();
+	void ApplyStartupAttributeEffectsFromConfig(class AADPlayerCharacter* PlayerCharacter, const UADInputConfigData* ResolvedInputConfig);
 
 	void HandleFreeMoveInput(class AADPlayerCharacter* PlayerCharacter, const FVector2D& MovementInput);
 	bool TryHandleLockOnMoveInput(class AADPlayerCharacter* PlayerCharacter, const FVector2D& MovementInput);

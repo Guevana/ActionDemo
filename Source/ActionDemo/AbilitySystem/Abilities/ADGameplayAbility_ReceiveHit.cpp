@@ -38,12 +38,11 @@ void UADGameplayAbility_ReceiveHit::ActivateAbility(
 		return;
 	}
 
-	const float DamageAmount = ResolveDamageAmount(TriggerEventData);
-	const bool bAppliedDamage = ApplyDamageEffect(Handle, ActorInfo, ActivationInfo, TriggerEventData, DamageAmount);
+	const bool bAppliedDamage = ApplyDamageEffect(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
 	if (TriggerEventData != nullptr)
 	{
-		K2_OnHitReceived(*TriggerEventData, bAppliedDamage ? DamageAmount : 0.0f);
+		K2_OnHitReceived(*TriggerEventData, 0.0f);
 	}
 
 	if (!bAppliedDamage || !ShouldEnterHitReact(ActorInfo))
@@ -52,7 +51,7 @@ void UADGameplayAbility_ReceiveHit::ActivateAbility(
 		return;
 	}
 
-	BeginHitReact(ActorInfo, TriggerEventData, DamageAmount);
+	BeginHitReact(ActorInfo, TriggerEventData, 0.0f);
 }
 
 void UADGameplayAbility_ReceiveHit::EndAbility(
@@ -84,10 +83,9 @@ bool UADGameplayAbility_ReceiveHit::ApplyDamageEffect(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
-	const FGameplayEventData* TriggerEventData,
-	float DamageAmount) const
+	const FGameplayEventData* TriggerEventData) const
 {
-	if (ActorInfo == nullptr || ActorInfo->AbilitySystemComponent == nullptr || DamageAmount <= 0.0f)
+	if (ActorInfo == nullptr || ActorInfo->AbilitySystemComponent == nullptr)
 	{
 		return false;
 	}
@@ -106,15 +104,25 @@ bool UADGameplayAbility_ReceiveHit::ApplyDamageEffect(
 		return false;
 	}
 
+	UAbilitySystemComponent* SourceASC = nullptr;
+	if (TriggerEventData != nullptr)
+	{
+		if (const AADCharacterBase* InstigatorCharacter = Cast<AADCharacterBase>(TriggerEventData->Instigator.Get()))
+		{
+			SourceASC = InstigatorCharacter->GetADAbilitySystemComponent();
+		}
+	}
+
+	UAbilitySystemComponent* SpecASC = SourceASC != nullptr ? SourceASC : TargetASC;
 	FGameplayEffectContextHandle EffectContext = TriggerEventData != nullptr && TriggerEventData->ContextHandle.IsValid()
 		? TriggerEventData->ContextHandle
-		: TargetASC->MakeEffectContext();
+		: SpecASC->MakeEffectContext();
 	if (TriggerEventData != nullptr && TriggerEventData->Instigator != nullptr)
 	{
 		EffectContext.AddInstigator(const_cast<AActor*>(TriggerEventData->Instigator.Get()), const_cast<AActor*>(TriggerEventData->Instigator.Get()));
 	}
 
-	FGameplayEffectSpecHandle SpecHandle = TargetASC->MakeOutgoingSpec(
+	FGameplayEffectSpecHandle SpecHandle = SpecASC->MakeOutgoingSpec(
 		DamageEffectClass,
 		GetAbilityLevel(Handle, ActorInfo),
 		EffectContext);
@@ -123,15 +131,13 @@ bool UADGameplayAbility_ReceiveHit::ApplyDamageEffect(
 		return false;
 	}
 
-	SpecHandle.Data->SetSetByCallerMagnitude(ADGameplayTags::Data_Damage, -FMath::Abs(DamageAmount));
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 
 	UE_LOG(
 		LogTemp,
 		Log,
-		TEXT("[ActionDemo] ReceiveHit applied damage. Target=%s Damage=%.2f Effect=%s"),
+		TEXT("[ActionDemo] ReceiveHit applied damage effect. Target=%s Effect=%s"),
 		ActorInfo->AvatarActor.IsValid() ? *ActorInfo->AvatarActor->GetName() : TEXT("None"),
-		DamageAmount,
 		*GetNameSafe(DamageEffectClass.Get()));
 
 	return true;
@@ -282,14 +288,4 @@ TSubclassOf<UGameplayEffect> UADGameplayAbility_ReceiveHit::ResolveDamageEffectC
 	}
 
 	return DefaultDamageEffectClass;
-}
-
-float UADGameplayAbility_ReceiveHit::ResolveDamageAmount(const FGameplayEventData* TriggerEventData) const
-{
-	if (TriggerEventData != nullptr)
-	{
-		return FMath::Max(0.0f, TriggerEventData->EventMagnitude);
-	}
-
-	return DefaultDamageAmount;
 }
