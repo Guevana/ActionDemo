@@ -6,9 +6,7 @@
 
 class UAbilityTask_PlayMontageAndWait;
 class UAbilityTask_WaitDelay;
-class UAnimMontage;
 class UADCombatActionData;
-class UGameplayEffect;
 
 /**
  * 攻击类 Ability 通用基类。
@@ -35,59 +33,11 @@ public:
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
 
-	/** 攻击动作对应的 Montage。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack")
-	TObjectPtr<UAnimMontage> AttackMontage;
-
-	/** 攻击总时长，默认用于自动结束 Ability(一般需长于montage长度)。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack", meta = (ClampMin = "0.0"))
-	float DefaultAttackDuration = 0.35f;
-	
-	/** 无 Montage 或 Montage 未启动时，是否使用 DefaultAttackDuration 兜底结束 Ability。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack")
-	bool bAutoEndAbility = true;
-	
-	/** 是否在激活后自动播放 Montage。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack")
-	bool bAutoPlayMontage = true;
-
-	/** 连段取消旧 Ability 时 Montage 的淡出时间。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack", meta = (ClampMin = "0.0"))
-	float CancelMontageBlendOutTime = 0.08f;
-	
 	/** 攻击 Ability 可驱动的数据配置。 */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack")
 	TObjectPtr<UADCombatActionData> ActionData;
 
-	/** 命中后由目标侧受击 Ability 应用的伤害 GameplayEffect。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|Damage")
-	TSubclassOf<UGameplayEffect> DamageEffectClass;
-
 protected:
-	/** Commit 成功后是否刷新锁定目标对应的 Motion Warping Target。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	bool bUpdateLockOnWarpTargetOnCommit = true;
-
-	/** 是否使用当前锁定目标作为攻击 Motion Warping Target。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	bool bUseLockedTargetForWarping = true;
-
-	/** 攻击 Motion Warping Target 名称，需要与 Montage Notify 中的 Warp Target Name 对齐。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	FName LockOnWarpTargetName = TEXT("AttackTarget");
-
-	/** 沿攻击者指向锁定目标方向的目标点偏移。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	float LockOnWarpTargetForwardOffset = 0.0f;
-
-	/** 沿攻击者面向锁定目标时右方向的目标点偏移。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	float LockOnWarpTargetRightOffset = 0.0f;
-
-	/** 世界 Up 方向目标点偏移。 */
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "ActionDemo|Attack|MotionWarping")
-	float LockOnWarpTargetUpOffset = 0.0f;
-
 	/** 尝试把当前锁定目标写入 Motion Warping Target；无有效目标时会清理同名 Target。 */
 	bool TryUpdateLockOnWarpTarget();
 

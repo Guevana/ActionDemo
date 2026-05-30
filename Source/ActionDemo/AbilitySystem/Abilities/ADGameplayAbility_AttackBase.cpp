@@ -3,7 +3,7 @@
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Abilities/Tasks/AbilityTask_WaitDelay.h"
 #include "Animation/AnimInstance.h"
-#include "AbilitySystem/Effects/ADGameplayEffect_Damage.h"
+#include "AbilitySystem/Data/ADCombatActionData.h"
 #include "Character/Base/ADCharacterBase.h"
 #include "Components/Combat/ADCombatComponent.h"
 #include "Components/Target/ADTargetingComponent.h"
@@ -14,7 +14,6 @@
 UADGameplayAbility_AttackBase::UADGameplayAbility_AttackBase()
 {
 	InputTag = ADGameplayTags::Input_Attack_Light;
-	DamageEffectClass = UADGameplayEffect_Damage::StaticClass();
 	ActivationBlockedTags.AddTag(ADGameplayTags::State_Dead);
 	ActivationBlockedTags.AddTag(ADGameplayTags::State_Hit_React);
 }
@@ -29,6 +28,13 @@ void UADGameplayAbility_AttackBase::ActivateAbility(
 	bAttackFinishTaskStarted = false;
 	AttackMontageTask = nullptr;
 
+	if (ActionData == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[ActionDemo] Attack ability %s has no ActionData."), *GetNameSafe(GetClass()));
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
+		return;
+	}
+
 	if (!CommitAbility(Handle, ActorInfo, ActivationInfo))
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, true);
@@ -38,11 +44,11 @@ void UADGameplayAbility_AttackBase::ActivateAbility(
 	TryUpdateLockOnWarpTarget();
 	NotifyAttackStarted();
 
-	const bool bMontageTaskStarted = bAutoPlayMontage && PlayAttackMontage();
+	const bool bMontageTaskStarted = ActionData->bAutoPlayMontage && PlayAttackMontage();
 
-	if (bAutoEndAbility && !bMontageTaskStarted)
+	if (ActionData->bAutoEndAbility && !bMontageTaskStarted)
 	{
-		StartAttackTimelineTasks(DefaultAttackDuration);
+		StartAttackTimelineTasks(ActionData->DefaultAttackDuration);
 	}
 
 	K2_OnAbilityActivated();
@@ -71,7 +77,7 @@ void UADGameplayAbility_AttackBase::EndAbility(
 
 bool UADGameplayAbility_AttackBase::TryUpdateLockOnWarpTarget()
 {
-	if (!bUpdateLockOnWarpTargetOnCommit || LockOnWarpTargetName.IsNone())
+	if (ActionData == nullptr || !ActionData->bUpdateLockOnWarpTargetOnCommit || ActionData->LockOnWarpTargetName.IsNone())
 	{
 		return false;
 	}
@@ -82,7 +88,7 @@ bool UADGameplayAbility_AttackBase::TryUpdateLockOnWarpTarget()
 		return false;
 	}
 
-	if (!bUseLockedTargetForWarping || Character->GetTargetingComponent() == nullptr)
+	if (!ActionData->bUseLockedTargetForWarping || Character->GetTargetingComponent() == nullptr)
 	{
 		ClearLockOnWarpTarget();
 		return false;
@@ -106,13 +112,13 @@ bool UADGameplayAbility_AttackBase::TryUpdateLockOnWarpTarget()
 	const FVector ForwardToTarget = ToTarget.GetSafeNormal();
 	const FVector RightToTarget = FVector::CrossProduct(FVector::UpVector, ForwardToTarget).GetSafeNormal();
 	const FVector TargetLocation = CurrentTarget->GetActorLocation()
-		+ ForwardToTarget * LockOnWarpTargetForwardOffset
-		+ RightToTarget * LockOnWarpTargetRightOffset
-		+ FVector::UpVector * LockOnWarpTargetUpOffset;
+		+ ForwardToTarget * ActionData->LockOnWarpTargetForwardOffset
+		+ RightToTarget * ActionData->LockOnWarpTargetRightOffset
+		+ FVector::UpVector * ActionData->LockOnWarpTargetUpOffset;
 	const FRotator TargetRotation(0.0f, ForwardToTarget.Rotation().Yaw, 0.0f);
 
 	Character->GetMotionWarpingComponent()->AddOrUpdateWarpTargetFromTransform(
-		LockOnWarpTargetName,
+		ActionData->LockOnWarpTargetName,
 		FTransform(TargetRotation, TargetLocation));
 	return true;
 }
@@ -120,9 +126,9 @@ bool UADGameplayAbility_AttackBase::TryUpdateLockOnWarpTarget()
 void UADGameplayAbility_AttackBase::ClearLockOnWarpTarget() const
 {
 	const AADCharacterBase* Character = Cast<AADCharacterBase>(GetAvatarActorFromActorInfo());
-	if (Character != nullptr && Character->GetMotionWarpingComponent() != nullptr && !LockOnWarpTargetName.IsNone())
+	if (Character != nullptr && Character->GetMotionWarpingComponent() != nullptr && ActionData != nullptr && !ActionData->LockOnWarpTargetName.IsNone())
 	{
-		Character->GetMotionWarpingComponent()->RemoveWarpTarget(LockOnWarpTargetName);
+		Character->GetMotionWarpingComponent()->RemoveWarpTarget(ActionData->LockOnWarpTargetName);
 	}
 }
 
@@ -175,7 +181,7 @@ void UADGameplayAbility_AttackBase::NotifyAttackEnded()
 
 bool UADGameplayAbility_AttackBase::PlayAttackMontage()
 {
-	if (AttackMontage == nullptr)
+	if (ActionData == nullptr || ActionData->AttackMontage == nullptr)
 	{
 		return false;
 	}
@@ -183,7 +189,7 @@ bool UADGameplayAbility_AttackBase::PlayAttackMontage()
 	AttackMontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(
 		this,
 		TEXT("AttackMontage"),
-		AttackMontage,
+		ActionData->AttackMontage,
 		1.0f,
 		NAME_None,
 		true);
@@ -203,14 +209,14 @@ bool UADGameplayAbility_AttackBase::PlayAttackMontage()
 void UADGameplayAbility_AttackBase::StopAttackMontage() const
 {
 	const ACharacter* Character = Cast<ACharacter>(GetAvatarActorFromActorInfo());
-	if (Character == nullptr || AttackMontage == nullptr || Character->GetMesh() == nullptr)
+	if (Character == nullptr || ActionData == nullptr || ActionData->AttackMontage == nullptr || Character->GetMesh() == nullptr)
 	{
 		return;
 	}
 
 	if (UAnimInstance* AnimInstance = Character->GetMesh()->GetAnimInstance())
 	{
-		AnimInstance->Montage_Stop(CancelMontageBlendOutTime, AttackMontage);
+		AnimInstance->Montage_Stop(ActionData->CancelMontageBlendOutTime, ActionData->AttackMontage);
 	}
 }
 

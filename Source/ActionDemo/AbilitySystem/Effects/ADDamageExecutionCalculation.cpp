@@ -1,6 +1,7 @@
 #include "AbilitySystem/Effects/ADDamageExecutionCalculation.h"
 
 #include "AbilitySystem/Attributes/ADAttributeSet.h"
+#include "Core/Tags/ADGameplayTags.h"
 
 struct FADDamageExecutionStatics
 {
@@ -54,7 +55,16 @@ void UADDamageExecutionCalculation::Execute_Implementation(
 		return;
 	}
 
-	const float FinalDamage = FMath::Max(1.0f, ClampedAttackPower - FMath::Max(0.0f, Defense));
+	const float DamageScale = FMath::Max(
+		0.0f,
+		Spec.GetSetByCallerMagnitude(ADGameplayTags::Data_DamageScale, false, 1.0f));
+	if (DamageScale <= 0.0f)
+	{
+		return;
+	}
+
+	const float ScaledAttackPower = ClampedAttackPower * DamageScale;
+	const float FinalDamage = FMath::Max(1.0f, ScaledAttackPower - FMath::Max(0.0f, Defense));
 	OutExecutionOutput.AddOutputModifier(FGameplayModifierEvaluatedData(
 		UADAttributeSet::GetHealthAttribute(),
 		EGameplayModOp::Additive,

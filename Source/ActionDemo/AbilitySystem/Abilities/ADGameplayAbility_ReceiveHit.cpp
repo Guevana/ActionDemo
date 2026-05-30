@@ -131,6 +131,11 @@ bool UADGameplayAbility_ReceiveHit::ApplyDamageEffect(
 		return false;
 	}
 
+	const float DamageScale = TriggerEventData != nullptr
+		? FMath::Max(0.0f, TriggerEventData->EventMagnitude)
+		: 1.0f;
+	SpecHandle.Data->SetSetByCallerMagnitude(ADGameplayTags::Data_DamageScale, DamageScale);
+
 	TargetASC->ApplyGameplayEffectSpecToSelf(*SpecHandle.Data.Get());
 
 	UE_LOG(

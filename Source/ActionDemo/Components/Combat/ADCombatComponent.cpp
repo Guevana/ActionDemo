@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/ADAbilitySystemComponent.h"
 #include "AbilitySystem/Abilities/ADGameplayAbility_AttackBase.h"
+#include "AbilitySystem/Data/ADCombatActionData.h"
 #include "Character/Base/ADCharacterBase.h"
 #include "Components/Combat/ADCombatHitReceiverInterface.h"
 #include "Core/Tags/ADGameplayTags.h"
@@ -152,6 +153,8 @@ void UADCombatComponent::HandleHitConfirmed(const FADCombatHitEventData& HitData
 
 void UADCombatComponent::FillHitDataFromCurrentAction(FADCombatHitEventData& HitData) const
 {
+	HitData.DamageScale = 1.0f;
+
 	if (CurrentActionAbilityClass == nullptr)
 	{
 		return;
@@ -163,7 +166,11 @@ void UADCombatComponent::FillHitDataFromCurrentAction(FADCombatHitEventData& Hit
 		return;
 	}
 
-	HitData.DamageEffectClass = AttackCDO->DamageEffectClass;
+	if (AttackCDO->ActionData != nullptr)
+	{
+		HitData.DamageEffectClass = AttackCDO->ActionData->DamageEffectClass;
+		HitData.DamageScale = FMath::Max(0.0f, AttackCDO->ActionData->DamageScale);
+	}
 }
 
 void UADCombatComponent::SyncCancelWindowTag()
@@ -204,6 +211,7 @@ void UADCombatComponent::SendHitGameplayEvent(const FADCombatHitEventData& HitDa
 	EventData.EventTag = HitData.HitEventTag;
 	EventData.Instigator = HitData.InstigatorCharacter;
 	EventData.Target = HitData.TargetCharacter;
+	EventData.EventMagnitude = HitData.DamageScale;
 	EventData.OptionalObject = HitData.DamageEffectClass.Get();
 	if (HitData.SourceActionTag.IsValid())
 	{

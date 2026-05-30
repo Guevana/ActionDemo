@@ -11,6 +11,7 @@ namespace ADGameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Attack_Light_03, "Ability.Attack.Light.03");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Target_Lock, "Ability.Target.Lock");
 	UE_DEFINE_GAMEPLAY_TAG(Ability_Hit_React, "Ability.Hit.React");
+	UE_DEFINE_GAMEPLAY_TAG(Data_DamageScale, "Data.DamageScale");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Hit_Confirm, "Event.Hit.Confirm");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Target_Locked, "Event.Target.Locked");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Target_Unlocked, "Event.Target.Unlocked");
